@@ -1,4 +1,3 @@
-from this import d
 from aws_cdk import (
     Stack, 
     aws_sns as sns,
@@ -17,25 +16,17 @@ from constructs import Construct
 class CardsInfra(Stack):
 
     def __setup_backend_infra(self) -> None:
-        event_notifier_topic_name = "CardsEventNotifier"
-        session_data_table_name = "SessionData"
-        api_gateway_name = "CardsApiGateway"
-
-        self.__event_notifier = sns.Topic(
-            self, 
-            id=event_notifier_topic_name, 
-            topic_name=event_notifier_topic_name
+        self.__event_notifier = sns.Topic(self, id="cards_event_notifier", 
+            topic_name="cards_event_notifier"
         )
 
-        self.__session_data = dyndb.Table(
-            self, 
-            session_data_table_name, 
-            table_name=session_data_table_name,
+        self.__session_data = dyndb.Table(self, "session_data", 
+            table_name="session_data",
             removal_policy=RemovalPolicy.DESTROY,  # destroy data when deleting dev stack. Obviouisly not for production.
             partition_key= dyndb.Attribute(name="session_id", type=dyndb.AttributeType.STRING)
         )
 
-        self.__api_gateway = api.RestApi(self, api_gateway_name,
+        self.__api_gateway = api.RestApi(self, "cards_api_gateway",
             default_cors_preflight_options=api.CorsOptions(
                 allow_origins=api.Cors.ALL_ORIGINS,
                 allow_methods=api.Cors.ALL_METHODS,
@@ -43,7 +34,6 @@ class CardsInfra(Stack):
                 allow_credentials=True
             )
         )
-
 
 
     def __setup_dns(self) -> None:

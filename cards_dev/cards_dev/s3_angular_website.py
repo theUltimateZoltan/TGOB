@@ -11,7 +11,7 @@ from cards_dev.infrastructure import CardsInfra
 class CardsFrontEnd(Stack):
 
     def __create_angular_website_bucket(self) -> s3.Bucket:
-        website_bucket = s3.Bucket(self, "cards-website", 
+        website_bucket = s3.Bucket(self, "cards_website", 
             versioned=False, 
             website_index_document="index.html", 
             public_read_access=True,
@@ -19,7 +19,7 @@ class CardsFrontEnd(Stack):
             removal_policy=RemovalPolicy.RETAIN
         )
         
-        website_deployment = BucketDeployment(self, "website-deployment", 
+        website_deployment = BucketDeployment(self, "website_deployment", 
             sources=[Source.asset("website/dist/cards_fe")],
             destination_bucket=website_bucket
         )
