@@ -1,0 +1,12 @@
+<div class="row w-50 m-auto">
+  <div class="row">
+    <div class="col">
+      <h1 class="display-3">Header</h1>
+    </div>
+    <div class="row">
+    <div class="col">
+      <app-game-setup *ngIf="!session_guid"></app-game-setup>
+      <app-game-session *ngIf="session_guid" [session_guid]="session_guid"></app-game-session>
+    </div>
+  </div>
+</div>

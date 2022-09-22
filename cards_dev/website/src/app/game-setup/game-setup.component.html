@@ -1,0 +1,17 @@
+<div class="row">
+    <div class="col">Join existing game:</div>
+    <div class="col">
+        <div class="input-group">
+            <button type="button" class="btn btn-primary m-auto p-3" (click)="on_join(JoinGameInput.value)">Join</button>
+            <input id="join-game-guid-input" name="game-guid=input" type="text" class="form-control" #JoinGameInput />
+        </div>
+    </div>
+</div>
+<hr>
+<div class="row">
+    <div class="col text-right">Create a new game session: </div>
+    <div class="col">
+        <button type="button" class="btn btn-primary m-auto p-3" (click)="on_create()">Create</button>
+        is prod (test print): <span [innerText]="is_prod"></span>
+    </div>
+</div>
