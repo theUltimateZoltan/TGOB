@@ -4,6 +4,7 @@ from aws_cdk import (
     Stack,
     aws_apigateway as api,
     aws_lambda as lambda_,
+    RemovalPolicy
 )
 from constructs import Construct
 
@@ -14,12 +15,13 @@ class _HttpMethod(enum.Enum):
     GET="GET"
 
 class CardsBackend(Stack):
-    def __provision_lambda_function(self, main_file_name: str, 
+    def __provision_backend_lambda_function(self, main_file_name: str, 
             handler_function: str="lambda_handler", runtime: lambda_.Runtime=lambda_.Runtime.PYTHON_3_9) -> lambda_.Function:
         return lambda_.Function(self, f"{main_file_name}_lambda",
             runtime=runtime,
             handler=f"{main_file_name}.{handler_function}",
-            code=lambda_.Code.from_asset(path.join(self.__lambda_src_path, main_file_name))
+            code=lambda_.Code.from_asset(path.join(self.__lambda_src_path, main_file_name)),
+            layers=[self.__shared_backend_layer]
         )
 
     def __add_resource_method(self, path: str, method: _HttpMethod, proxy_function: lambda_.Function) -> None:
@@ -29,12 +31,21 @@ class CardsBackend(Stack):
     def __define_api(self) -> None:
         self.__resources = ["session", "inquiry", "answer"]
         
+        self.__shared_backend_layer = lambda_.LayerVersion(self, "shared_backend_layer",
+            removal_policy=RemovalPolicy.DESTROY,
+            code=lambda_.Code.from_asset(self.__lambda_shared_layers_path),
+            compatible_runtimes=[lambda_.Runtime.PYTHON_3_9]
+        )
+
         for resource in self.__resources:
             self.__infra.api_gateway.root.add_resource(resource)
             
-        self.__add_resource_method("session", _HttpMethod.POST, self.__provision_lambda_function("create_new_session"))
+        self.__add_resource_method("session", _HttpMethod.POST, self.__provision_backend_lambda_function("create_new_session"))
         # self.__add_resource_method("session", _HttpMethod.GET, self.__provision_lambda_function("get_session_by_id"))
 
+    @property
+    def __lambda_shared_layers_path(self) -> str:
+        return path.join(self.__lambda_src_path, "backend_base_layer")
 
     def __init__(self, scope: Construct, construct_id: str, infrastructure: CardsInfra ,**kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)

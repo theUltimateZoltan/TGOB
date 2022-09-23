@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./cards_dev/cards_dev/src_lambda/shared"
+    ]
+}

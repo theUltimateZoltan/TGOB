@@ -2,5 +2,9 @@
   "hosted-zone:account=451230547744:domainName=eladlevy.click:region=us-west-2": {
     "Id": "/hostedzone/Z09316682H4XSESS7GC6B",
     "Name": "eladlevy.click."
-  }
+  },
+  "acknowledged-issue-numbers": [
+    22090,
+    21902
+  ]
 }
