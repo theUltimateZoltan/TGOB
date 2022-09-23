@@ -15,7 +15,7 @@ class _HttpMethod(enum.Enum):
 
 class CardsBackend(Stack):
     def __provision_lambda_function(self, main_file_name: str, 
-            handler_function: str="lambda.handler", runtime: lambda_.Runtime=lambda_.Runtime.PYTHON_3_9) -> lambda_.Function:
+            handler_function: str="lambda_handler", runtime: lambda_.Runtime=lambda_.Runtime.PYTHON_3_9) -> lambda_.Function:
         return lambda_.Function(self, f"{main_file_name}_lambda",
             runtime=runtime,
             handler=f"{main_file_name}.{handler_function}",

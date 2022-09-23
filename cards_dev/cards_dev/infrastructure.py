@@ -58,7 +58,7 @@ class CardsInfra(Stack):
         )
 
         
-    def define_website_bucket(self, s3_bucket_website :s3.Bucket):
+    def define_website_bucket(self, s3_bucket_website :s3.Bucket) -> None:
 
         self.__frontend_tls_certificate = acm.DnsValidatedCertificate(self, "frontend_tls_certificate",
             domain_name=self.domain,

@@ -16,7 +16,8 @@ class CardsFrontEnd(Stack):
             website_index_document="index.html", 
             public_read_access=True,
             bucket_name=self.__infra.domain,
-            removal_policy=RemovalPolicy.RETAIN
+            removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True
         )
         
         website_deployment = BucketDeployment(self, "website_deployment", 
