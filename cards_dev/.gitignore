@@ -8,3 +8,4 @@ Pipfile*
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+dependencies
