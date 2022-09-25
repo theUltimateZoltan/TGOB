@@ -1,7 +1,6 @@
 import logging
 import json
 from typing import Any
-from boto3.dynamodb import conditions
 from mypy_boto3_dynamodb.service_resource import Table
 
 logger = logging.getLogger()

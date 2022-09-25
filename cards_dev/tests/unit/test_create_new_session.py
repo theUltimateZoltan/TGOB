@@ -1,3 +1,4 @@
+import json
 from cards_dev.src_lambda.create_new_session import create_new_session
 from moto import mock_dynamodb
 from unittest.mock import patch
@@ -5,7 +6,7 @@ from cards_dev.src_lambda.backend_base_layer.python.models import GameSession
 import boto3
 from mypy_boto3_dynamodb.service_resource import Table
 import pytest
-from backend_base_layer import dynamodb_key_exists
+from backend_base_layer import dynamodb_get_item_by_key, dynamodb_key_exists
 
 @pytest.fixture
 def session_table() -> Table:
@@ -48,3 +49,13 @@ def test_generated_id_unique(session_table: Table, arbitrary_game_session: GameS
         assert dynamodb_key_exists(session_table, "session_id", arbitrary_game_session.id)
         assert dynamodb_key_exists(session_table, "session_id", "Anotherid")  #Item exists, why does't it return true?
 
+def test_simple_session_creation(session_table):
+    response = create_new_session.lambda_handler({"creator_id": "some_test_user"}, {}, session_table_mock=session_table)
+    session_id: str = json.loads(response.get("body")).get("session_id")
+    assert dynamodb_key_exists(session_table, "session_id", session_id)
+
+
+def test_requester_is_added_as_player(session_table):
+    response = create_new_session.lambda_handler({"creator_id": "some_test_user"}, {}, session_table_mock=session_table)
+    session_id: str = json.loads(response.get("body")).get("session_id")
+    assert "some_test_user" in dynamodb_get_item_by_key(session_table, "session_id", session_id)["players_ids"]

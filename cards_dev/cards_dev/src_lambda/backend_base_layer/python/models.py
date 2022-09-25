@@ -32,7 +32,3 @@ class GameSession:
             "round": self.round,
             "players_ids": list(self.players_ids)
         }
-
-    @property
-    def json(self) -> str:
-        return json.dumps(self.to_dict())
