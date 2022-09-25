@@ -21,7 +21,7 @@ class CardsInfra(Stack):
         )
 
         self.__session_data = dyndb.Table(self, "session_data", 
-            table_name="session_data",
+            table_name="dev_session_data",
             removal_policy=RemovalPolicy.DESTROY,  # destroy data when deleting dev stack. Obviouisly not for production.
             partition_key= dyndb.Attribute(name="session_id", type=dyndb.AttributeType.STRING)
         )
