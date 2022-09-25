@@ -1,31 +1,20 @@
 from aws_cdk import (
     Stack, 
-    aws_sns as sns,
-    aws_dynamodb as dyndb,
-    RemovalPolicy,
     aws_apigateway as api,
     aws_route53 as route53,
     aws_s3 as s3,
     aws_certificatemanager as acm,
     aws_route53_targets as targets,
     aws_cloudfront as cloudfront,
-    aws_cloudfront_origins as origins
+    aws_cloudfront_origins as origins,
+    aws_lambda as lambda_
 )
 from constructs import Construct
+from mypy_boto3_dynamodb.service_resource import Table
 
 class CardsInfra(Stack):
 
     def __setup_backend_infra(self) -> None:
-        self.__event_notifier = sns.Topic(self, id="cards_event_notifier", 
-            topic_name="cards_event_notifier"
-        )
-
-        self.__session_data = dyndb.Table(self, "session_data", 
-            table_name="dev_session_data",
-            removal_policy=RemovalPolicy.DESTROY,  # destroy data when deleting dev stack. Obviouisly not for production.
-            partition_key= dyndb.Attribute(name="session_id", type=dyndb.AttributeType.STRING)
-        )
-
         self.__api_gateway = api.RestApi(self, "cards_api_gateway",
             default_cors_preflight_options=api.CorsOptions(
                 allow_origins=api.Cors.ALL_ORIGINS,
@@ -65,7 +54,7 @@ class CardsInfra(Stack):
             hosted_zone=self.__hosted_zone,
             validation=acm.CertificateValidation.from_dns(self.__hosted_zone),
             region="us-east-1"  # required for cloudfront distribution
-        )
+        ) #TODO unify certificates - https://docs.aws.amazon.com/acm/latest/userguide/gs-acm-request-public.html
 
         self.__frontend_cloudfront_distribution = cloudfront.Distribution(self, "frontend_cloudfront_distribution",
             default_behavior=cloudfront.BehaviorOptions(
@@ -84,7 +73,6 @@ class CardsInfra(Stack):
             record_name=self.domain,
             target=route53.RecordTarget.from_alias(targets.CloudFrontTarget(self.__frontend_cloudfront_distribution))
         )
-
 
     @property
     def api_domain(self) -> str:

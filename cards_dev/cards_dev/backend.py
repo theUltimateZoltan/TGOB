@@ -1,12 +1,16 @@
 import enum
-from os import path, rmdir
+from os import path
+from shutil import rmtree
 import subprocess
 import sys
 from aws_cdk import (
     Stack,
     aws_apigateway as api,
     aws_lambda as lambda_,
-    RemovalPolicy
+    RemovalPolicy,
+    aws_sns as sns,
+    aws_dynamodb as dyndb,
+    RemovalPolicy,
 )
 from constructs import Construct
 
@@ -18,7 +22,7 @@ class _HttpMethod(enum.Enum):
 
 class CardsBackend(Stack):
     def __package_dependencies(self, lambda_source_path: str) -> str:
-        rmdir(installation_path:=path.join(lambda_source_path, "dependencies", "python"))
+        rmtree(installation_path:=path.join(lambda_source_path, "dependencies", "python"))
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", path.join(lambda_source_path ,"requirements.txt"),
             "-t", installation_path],
             stdout=sys.stdout)
@@ -34,12 +38,16 @@ class CardsBackend(Stack):
             compatible_runtimes=[lambda_.Runtime.PYTHON_3_9]
         )
 
-        return lambda_.Function(self, f"{main_file_name}_lambda",
+        function = lambda_.Function(self, f"{main_file_name}_lambda",
             runtime=runtime,
             handler=f"{main_file_name}.{handler_function}",
             code=lambda_.Code.from_asset(function_path),
             layers=[self.__shared_backend_layer, dependencies_layer]
         )
+
+        self.__session_data.grant_read_write_data(function)
+
+        return function
 
     def __add_resource_method(self, path: str, method: _HttpMethod, proxy_function: lambda_.Function) -> None:
         assert path in self.__resources, "First create the resource, then add a method to it."
@@ -64,9 +72,21 @@ class CardsBackend(Stack):
     def __lambda_shared_layers_path(self) -> str:
         return path.join(self.__lambda_src_path, "backend_base_layer")
 
+    def __create_backend_resources(self) -> None:
+        self.__event_notifier = sns.Topic(self, id="cards_event_notifier", 
+            topic_name="cards_event_notifier"
+        )
+
+        self.__session_data = dyndb.Table(self, "session_data", 
+            table_name="dev_session_data",
+            removal_policy=RemovalPolicy.DESTROY,  # destroy data when deleting dev stack. Obviouisly not for production.
+            partition_key= dyndb.Attribute(name="session_id", type=dyndb.AttributeType.STRING)
+        )
+
     def __init__(self, scope: Construct, construct_id: str, infrastructure: CardsInfra ,**kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         self.__lambda_src_path = "cards_dev/src_lambda"
         self.__infra = infrastructure
+        self.__create_backend_resources()
         self.__define_api()
 
