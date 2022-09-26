@@ -37,6 +37,8 @@ graph LR
         rest_api;
         backend_lambdas;
         subdomain_tls_cert;
+    end
+    subgraph GAME_DATA
         session_data;
     end
     subgraph FRONTEND
