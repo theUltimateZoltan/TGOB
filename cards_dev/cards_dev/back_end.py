@@ -9,21 +9,77 @@ from aws_cdk import (
     aws_apigateway as api,
     aws_lambda as lambda_,
     RemovalPolicy,
-    aws_sns as sns,
     aws_certificatemanager as acm,
-    aws_route53 as route53,
-    aws_route53_targets as targets,
     RemovalPolicy
 )
 from constructs import Construct
-
 from cards_dev.endpoints import CardsEndpoints
+
 
 class _HttpMethod(enum.Enum):
     POST="POST"
     GET="GET"
 
+
 class CardsBackend(Stack):
+    def __init__(self, scope: Construct, construct_id: str, endpoints_stack: CardsEndpoints ,**kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)
+        self.__lambda_src_path = "cards_dev/src_lambda"
+        self.__lambdas: List[lambda_.Function] = list()
+        self.__endpoints_stack = endpoints_stack
+        self.__create_backend_resources()
+        self.__define_api()
+
+    @property
+    def __lambda_shared_layers_path(self) -> str:
+        return path.join(self.__lambda_src_path, "backend_base_layer")
+
+    @property
+    def lambdas(self) -> List[lambda_.Function]:
+        return self.__lambdas
+
+    def __create_backend_resources(self) -> None:
+        self.__api_gateway = api.RestApi(self, "cards_api_gateway",
+            default_cors_preflight_options=api.CorsOptions(
+                allow_origins=api.Cors.ALL_ORIGINS,
+                allow_methods=api.Cors.ALL_METHODS,
+                allow_headers=api.Cors.DEFAULT_HEADERS,
+                allow_credentials=True
+            )
+        )
+
+        self.__api_tls_certificate = acm.DnsValidatedCertificate(self, "api_tls_certificate",
+            domain_name=f"*.{self.__endpoints_stack.domain}",
+            hosted_zone=self.__endpoints_stack.hosted_zone,
+            validation=acm.CertificateValidation.from_dns(self.__endpoints_stack.hosted_zone),
+            region="us-west-2"
+        )
+
+        self.__api_gateway.add_domain_name("rest_api_domain_name",
+            domain_name=self.__endpoints_stack.api_domain,
+            certificate=self.__api_tls_certificate
+        )
+
+        self.__endpoints_stack.setup_rest_api_endpoints(self.__api_gateway)
+
+    def __define_api(self) -> None:
+        self.__resources = ["session", "inquiry", "answer"]
+        
+        self.__shared_backend_layer = lambda_.LayerVersion(self, "shared_backend_layer",
+            removal_policy=RemovalPolicy.DESTROY,
+            code=lambda_.Code.from_asset(self.__lambda_shared_layers_path),
+            compatible_runtimes=[lambda_.Runtime.PYTHON_3_9]
+        )
+
+        for resource in self.__resources:
+            self.__api_gateway.root.add_resource(resource)
+            
+        self.__add_resource_method("session", _HttpMethod.POST, self.__provision_backend_lambda_function("create_new_session"))
+        # self.__add_resource_method("session", _HttpMethod.GET, self.__provision_lambda_function("get_session_by_id"))
+
+    def __add_resource_method(self, path: str, method: _HttpMethod, proxy_function: lambda_.Function) -> None:
+        assert path in self.__resources, "First create the resource, then add a method to it."
+        self.__api_gateway.root.get_resource(path).add_method(method.value, api.LambdaIntegration(proxy_function))
 
     def __package_dependencies(self, lambda_source_path: str) -> str:
         rmtree(installation_path:=path.join(lambda_source_path, "dependencies", "python"))
@@ -52,50 +108,4 @@ class CardsBackend(Stack):
         self.__lambdas.append(function)
 
         return function
-
-    def __add_resource_method(self, path: str, method: _HttpMethod, proxy_function: lambda_.Function) -> None:
-        assert path in self.__resources, "First create the resource, then add a method to it."
-        self.__api_gateway.root.get_resource(path).add_method(method.value, api.LambdaIntegration(proxy_function))
-
-    def __define_api(self) -> None:
-        self.__resources = ["session", "inquiry", "answer"]
-        
-        self.__shared_backend_layer = lambda_.LayerVersion(self, "shared_backend_layer",
-            removal_policy=RemovalPolicy.DESTROY,
-            code=lambda_.Code.from_asset(self.__lambda_shared_layers_path),
-            compatible_runtimes=[lambda_.Runtime.PYTHON_3_9]
-        )
-
-        for resource in self.__resources:
-            self.__api_gateway.root.add_resource(resource)
-            
-        self.__add_resource_method("session", _HttpMethod.POST, self.__provision_backend_lambda_function("create_new_session"))
-        # self.__add_resource_method("session", _HttpMethod.GET, self.__provision_lambda_function("get_session_by_id"))
-
-    @property
-    def __lambda_shared_layers_path(self) -> str:
-        return path.join(self.__lambda_src_path, "backend_base_layer")
-
-    def __create_backend_resources(self) -> None:
-        self.__api_gateway = api.RestApi(self, "cards_api_gateway",
-            default_cors_preflight_options=api.CorsOptions(
-                allow_origins=api.Cors.ALL_ORIGINS,
-                allow_methods=api.Cors.ALL_METHODS,
-                allow_headers=api.Cors.DEFAULT_HEADERS,
-                allow_credentials=True
-            )
-        )
-        self.__endpoints_stack.define_rest_api(self.__api_gateway)
-
-    @property
-    def lambdas(self) -> List[lambda_.Function]:
-        return self.__lambdas
-
-    def __init__(self, scope: Construct, construct_id: str, endpoints_stack: CardsEndpoints ,**kwargs) -> None:
-        super().__init__(scope, construct_id, **kwargs)
-        self.__lambda_src_path = "cards_dev/src_lambda"
-        self.__lambdas: List[lambda_.Function] = list()
-        self.__endpoints_stack = endpoints_stack
-        self.__create_backend_resources()
-        self.__define_api()
 
