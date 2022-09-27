@@ -17,6 +17,8 @@ from aws_cdk import (
 )
 from constructs import Construct
 
+from cards_dev.endpoints import CardsEndpoints
+
 class _HttpMethod(enum.Enum):
     POST="POST"
     GET="GET"
@@ -75,17 +77,6 @@ class CardsBackend(Stack):
         return path.join(self.__lambda_src_path, "backend_base_layer")
 
     def __create_backend_resources(self) -> None:
-        self.__tls_certificate_us_west_2 = acm.DnsValidatedCertificate(self, "tls_certificate_subdomains_us_west_2",
-            domain_name=f"*.{self.domain}",
-            hosted_zone=self.__hosted_zone,
-            validation=acm.CertificateValidation.from_dns(self.__hosted_zone),
-            region="us-west-2"
-        )
-
-        self.__event_notifier = sns.Topic(self, id="cards_event_notifier", 
-            topic_name="cards_event_notifier"
-        )
-
         self.__api_gateway = api.RestApi(self, "cards_api_gateway",
             default_cors_preflight_options=api.CorsOptions(
                 allow_origins=api.Cors.ALL_ORIGINS,
@@ -94,55 +85,17 @@ class CardsBackend(Stack):
                 allow_credentials=True
             )
         )
-        self.define_rest_api(self.__api_gateway)
-
-    def __setup_dns(self) -> None:
-        self.__hosted_zone = route53.HostedZone.from_lookup(self, "cards_dns", 
-            domain_name=self.__base_domain
-        )
-
-    def define_rest_api(self, api_gw: api.RestApi) -> None:
-        api_gw.add_domain_name("rest_api_domain_name",
-            domain_name=self.api_domain,
-            certificate=self.__tls_certificate_us_west_2
-        )
-
-        route53.ARecord(self, "api_domain_alias",
-            zone=self.__hosted_zone,
-            record_name=self.api_domain,
-            target=route53.RecordTarget.from_alias(targets.ApiGateway(api_gw))
-        )
-
-    @property
-    def api_domain(self) -> str:
-        return ".".join([self.__api_subdomain, self.domain])
-
-    @property
-    def user_pool_domain(self) -> str:
-        return ".".join([self.__user_pool_subdomain, self.domain])
-
-    @property
-    def domain(self) -> str:
-        return ".".join([self.__environment_subdomain, self.__base_domain])
-
-    @property
-    def hosted_zone(self) -> route53.HostedZone:
-        return self.__hosted_zone
+        self.__endpoints_stack.define_rest_api(self.__api_gateway)
 
     @property
     def lambdas(self) -> List[lambda_.Function]:
         return self.__lambdas
 
-    def __init__(self, scope: Construct, construct_id: str ,**kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, endpoints_stack: CardsEndpoints ,**kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         self.__lambda_src_path = "cards_dev/src_lambda"
-        self.__base_domain: str = "eladlevy.click"
-        self.__api_subdomain: str = "api"
-        self.__user_pool_subdomain: str = "auth"
-        self.__environment_subdomain: str = "devcards"
         self.__lambdas: List[lambda_.Function] = list()
-
-        self.__setup_dns()
+        self.__endpoints_stack = endpoints_stack
         self.__create_backend_resources()
         self.__define_api()
 
