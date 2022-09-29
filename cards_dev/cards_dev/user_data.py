@@ -2,7 +2,8 @@ from aws_cdk import (
     Stack,
     RemovalPolicy,
     aws_cognito  as cognito,
-    aws_certificatemanager as acm,
+    aws_route53 as route53,
+    aws_route53_targets as targets,
     Duration
 )
 from constructs import Construct
@@ -57,20 +58,17 @@ class CardsUserData(Stack):
                 logout_urls=[f"https://{self.__endpoints_stack.domain}"]
             )
         )
-        self.__create_secure_alias()
-        self.__endpoints_stack.setup_user_pool_endpoints(self.__user_pool_domain)
-
-    def __create_secure_alias(self):
-        self.__user_pools_tls_certificate = acm.DnsValidatedCertificate(self, "user_pool_tls_certificate",
-            domain_name=f"*.{self.__endpoints_stack.domain}",
-            hosted_zone=self.__endpoints_stack.hosted_zone,
-            validation=acm.CertificateValidation.from_dns(self.__endpoints_stack.hosted_zone),
-            region="us-east-1"
-        )
+        # self.__endpoints_stack.setup_user_pool_endpoints(self.__user_pool)
 
         self.__user_pool_domain = self.__user_pool.add_domain("user_pool_domain",
             custom_domain=cognito.CustomDomainOptions(
                 domain_name=self.__endpoints_stack.user_pool_domain,
-                certificate=self.__user_pools_tls_certificate
+                certificate=self.__endpoints_stack.user_pools_tls_certificate
             )
+        )
+        
+        route53.ARecord(self, "user_pool_dns_record",
+            zone=self.__endpoints_stack.hosted_zone,
+            record_name=self.__endpoints_stack.user_pool_domain,
+            target=route53.RecordTarget.from_alias(targets.UserPoolDomainTarget(self.__user_pool_domain))
         )

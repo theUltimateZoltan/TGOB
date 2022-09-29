@@ -4,7 +4,7 @@ graph LR
     cloudfront_tls_cert-->hosted_zone;
     website_subdomain-->cloudfront_distribution;
     cloudfront_distribution-->cloudfront_tls_cert;
-    cloudfront_distribution-->s3_fe_bucket;
+    cloudfront_distribution---->s3_fe_bucket;
     user_pool_domin--implicit-->website_subdomain;
     website_subdomain-->hosted_zone;
     user_pool_domin-->user_pool_tls_cert;
@@ -18,14 +18,14 @@ graph LR
     rest_api_authoriser-->cognito_user_pool_client;
     cognito_user_pool_client-->cognito_user_pool;
     user_pool_domin-->cognito_user_pool;
-    backend_lambdas-->session_data;
+    backend_lambdas---->session_data;
 
     subgraph ENDPOINTS
         cloudfront_tls_cert;
-        user_pool_tls_cert;
         hosted_zone;
         cloudfront_distribution;
         user_pool_domin;
+        user_pool_tls_cert;
         api_domain_alias;
         website_subdomain;
     end
