@@ -58,7 +58,6 @@ class CardsUserData(Stack):
                 logout_urls=[f"https://{self.__endpoints_stack.domain}"]
             )
         )
-        # self.__endpoints_stack.setup_user_pool_endpoints(self.__user_pool)
 
         self.__user_pool_domain = self.__user_pool.add_domain("user_pool_domain",
             custom_domain=cognito.CustomDomainOptions(
