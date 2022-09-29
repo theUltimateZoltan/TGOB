@@ -10,6 +10,8 @@ from aws_cdk import (
     aws_lambda as lambda_,
     RemovalPolicy,
     aws_certificatemanager as acm,
+    aws_route53 as route53,
+    aws_route53_targets as targets,
     RemovalPolicy
 )
 from constructs import Construct
@@ -60,7 +62,11 @@ class CardsBackend(Stack):
             certificate=self.__api_tls_certificate
         )
 
-        self.__endpoints_stack.setup_rest_api_endpoints(self.__api_gateway)
+        route53.ARecord(self, "api_domain_alias",
+            zone=self.__endpoints_stack.hosted_zone,
+            record_name=self.__endpoints_stack.api_domain,
+            target=route53.RecordTarget.from_alias(targets.ApiGateway(self.__api_gateway))
+        )
 
     def __define_api(self) -> None:
         self.__resources = ["session", "inquiry", "answer"]

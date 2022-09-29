@@ -1,6 +1,5 @@
 from aws_cdk import (
     Stack,
-    aws_apigateway as api,
     aws_certificatemanager as acm,
     aws_route53 as route53,
     aws_route53_targets as targets,
@@ -81,14 +80,4 @@ class CardsEndpoints(Stack):
             region="us-east-1"
         )
   
-    def setup_rest_api_endpoints(self, api_gw: api.RestApi) -> None:
-        route53.ARecord(self, "api_domain_alias",
-            zone=self.__hosted_zone,
-            record_name=self.api_domain,
-            target=route53.RecordTarget.from_alias(targets.ApiGateway(api_gw))
-        )
-    
-    
-
-
     
