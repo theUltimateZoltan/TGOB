@@ -7,7 +7,6 @@ from aws_cdk import (
     aws_s3 as s3,
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as origins,
-    aws_cognito as cognito,
 )
 from constructs import Construct
 
@@ -20,6 +19,7 @@ class CardsEndpoints(Stack):
         self.__environment_subdomain: str = "devcards"
 
         self.__setup_hosted_zone()
+        self.__setup_user_pool_endpoints()
 
     @property
     def api_domain(self) -> str:
@@ -36,6 +36,10 @@ class CardsEndpoints(Stack):
     @property
     def hosted_zone(self) -> route53.HostedZone:
         return self.__hosted_zone
+
+    @property
+    def user_pools_tls_certificate(self) -> acm.Certificate:
+        return self.__user_pools_tls_certificate
 
     def __setup_hosted_zone(self) -> None:
         self.__hosted_zone = route53.HostedZone.from_lookup(self, "cards_dns", 
@@ -69,13 +73,14 @@ class CardsEndpoints(Stack):
         )
 
 
-    def setup_user_pool_endpoints(self, pool_alias: cognito.UserPoolDomain) -> None:
-        route53.ARecord(self, "user_pool_dns_record",
-            zone=self.hosted_zone,
-            record_name=self.user_pool_domain,
-            target=route53.RecordTarget.from_alias(targets.UserPoolDomainTarget(pool_alias))
+    def __setup_user_pool_endpoints(self) -> None:
+        self.__user_pools_tls_certificate = acm.DnsValidatedCertificate(self, "user_pool_tls_certificate",
+            domain_name=f"*.{self.domain}",
+            hosted_zone=self.hosted_zone,
+            validation=acm.CertificateValidation.from_dns(self.hosted_zone),
+            region="us-east-1"
         )
-
+  
     def setup_rest_api_endpoints(self, api_gw: api.RestApi) -> None:
         route53.ARecord(self, "api_domain_alias",
             zone=self.__hosted_zone,
