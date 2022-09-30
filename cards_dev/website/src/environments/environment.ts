@@ -5,7 +5,8 @@
 export const environment = {
   production: false,
   backend_api_url: "https://bu72lka3ik.execute-api.us-west-2.amazonaws.com/prod",
-  website_url: "localhost:4200"
+  website_url: "localhost:4200",
+  cognito_client_id: "4k9ppkrbhj153128nbr282q6p3"
 };
 
 /*

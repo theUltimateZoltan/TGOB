@@ -6,13 +6,15 @@ import { AppComponent } from './app.component';
 import { GameSetupComponent } from './game-setup/game-setup.component';
 import { GameSessionComponent } from './game-session/game-session.component';
 import { CoordinatorComponent } from './game-session/coordinator/coordinator.component';
+import { UserComponent } from './user/user.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     GameSetupComponent,
     GameSessionComponent,
-    CoordinatorComponent
+    CoordinatorComponent,
+    UserComponent
   ],
   imports: [
     BrowserModule,
