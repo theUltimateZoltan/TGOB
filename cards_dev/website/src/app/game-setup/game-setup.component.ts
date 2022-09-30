@@ -1,5 +1,5 @@
-import { Component, OnInit} from '@angular/core';
-import fetch from 'node-fetch';
+import { Component, Input, OnInit} from '@angular/core';
+import fetch, { Headers } from 'node-fetch';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -8,9 +8,13 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./game-setup.component.css']
 })
 export class GameSetupComponent implements OnInit {
-  constructor() { }
+  
+  @Input()
+  api_access_jwt: Map<string, string> = new Map([
+    ["access_token", "invalid_token"]
+  ])
 
-  is_prod: boolean = environment.production
+  constructor() {  }
 
   ngOnInit(): void {
   }
@@ -26,14 +30,15 @@ export class GameSetupComponent implements OnInit {
     
   }
 
-  private create_random_game_guid() : string {
-    return Math.random().toString(36).substring(2,10);
-  }
-
   async create_session() : Promise<string> {
-    const response = await fetch(`${environment.backend_api_url}/session/`, {method: 'POST', body: '{"creator_id": "front_end_user"}'});
-    const data = await response.json();
-    console.log(data);
+      const auth_token: string = this.api_access_jwt.get("id_token")!
+      const response = await fetch(`${environment.backend_api_url}/session/`, {method: 'POST', body: '{"creator_id": "front_end_user"}',
+        headers: {'Authorization': auth_token}
+      });
+      const data = await response.json();
+      console.log(data);
+    
+    
     return ""
   }
 
