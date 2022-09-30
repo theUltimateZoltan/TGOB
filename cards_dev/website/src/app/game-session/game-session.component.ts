@@ -10,9 +10,7 @@ export class GameSessionComponent implements OnInit {
   @Input() session_guid: string = "";
   
   @Input()
-  api_access_jwt: Map<string, string> = new Map([
-    ["access_token", "invalid_token"]
-  ])
+  api_access_token: string | undefined
 
   is_coordinator: boolean = true;
   

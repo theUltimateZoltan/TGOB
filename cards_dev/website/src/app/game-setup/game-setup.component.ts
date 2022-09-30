@@ -1,6 +1,7 @@
 import { Component, Input, OnInit} from '@angular/core';
 import fetch from 'node-fetch';
 import { environment } from 'src/environments/environment';
+import { Player } from '../models/player';
 
 @Component({
   selector: 'app-game-setup',
@@ -10,9 +11,10 @@ import { environment } from 'src/environments/environment';
 export class GameSetupComponent implements OnInit {
   
   @Input()
-  api_access_jwt: Map<string, string> = new Map([
-    ["access_token", "invalid_token"]
-  ])
+  api_access_token: string | undefined
+
+  @Input()
+  user: Player | undefined;
 
   constructor() {  }
 
@@ -31,8 +33,8 @@ export class GameSetupComponent implements OnInit {
   }
 
   async create_session() : Promise<string> {
-      const auth_token: string = this.api_access_jwt.get("id_token")!
-      const response = await fetch(`${environment.backend_api_url}/session/`, {method: 'POST', body: '{"creator_id": "front_end_user"}',
+      const auth_token: string = this.api_access_token!
+      const response = await fetch(`${environment.backend_api_url}/session/`, {method: 'POST', body: JSON.stringify({"creator_id": this.user!.email}),
         headers: {'Authorization': auth_token}
       });
       const data = await response.json();
