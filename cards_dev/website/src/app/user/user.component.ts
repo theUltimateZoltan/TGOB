@@ -12,7 +12,7 @@ export class UserComponent implements OnInit {
   api_access_jwt: EventEmitter<Map<string, string>> = new EventEmitter<Map<string, string>>()
 
   @Input()
-  user_logged_in: boolean = false
+  user_name: string | undefined = undefined
 
   auth_url: string = "https://auth.devcards.eladlevy.click/login?"
   cognito_client_id: string = environment.cognito_client_id
@@ -32,10 +32,6 @@ export class UserComponent implements OnInit {
 
   get_signup_url() {
     return this.get_login_url().replace("login?", "signup?")
-  }
-
-  get_logout_url() {
-    return this.get_login_url().replace("logout?", "signup?")
   }
 
   constructor() { }

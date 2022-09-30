@@ -1,5 +1,5 @@
 import { Component, Input, OnInit} from '@angular/core';
-import fetch, { Headers } from 'node-fetch';
+import fetch from 'node-fetch';
 import { environment } from 'src/environments/environment';
 
 @Component({
