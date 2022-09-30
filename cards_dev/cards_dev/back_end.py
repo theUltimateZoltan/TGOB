@@ -16,6 +16,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 from cards_dev.endpoints import CardsEndpoints
+from cards_dev.user_data import CardsUserData
 
 
 class _HttpMethod(enum.Enum):
@@ -24,11 +25,12 @@ class _HttpMethod(enum.Enum):
 
 
 class CardsBackend(Stack):
-    def __init__(self, scope: Construct, construct_id: str, endpoints_stack: CardsEndpoints ,**kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, endpoints_stack: CardsEndpoints , user_data_stack: CardsUserData, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         self.__lambda_src_path = "cards_dev/src_lambda"
         self.__lambdas: List[lambda_.Function] = list()
         self.__endpoints_stack = endpoints_stack
+        self.__user_data_stack = user_data_stack
         self.__create_backend_resources()
         self.__define_api()
 
@@ -68,6 +70,11 @@ class CardsBackend(Stack):
             target=route53.RecordTarget.from_alias(targets.ApiGateway(self.__api_gateway))
         )
 
+        self.__cognito_authorizer = api.CognitoUserPoolsAuthorizer(self, "user_pool_rest_api_authorizer",
+            authorizer_name="user_pool_rest_api_authorizer",
+            cognito_user_pools=[self.__user_data_stack.user_pool]
+        )
+
     def __define_api(self) -> None:
         self.__resources = ["session", "inquiry", "answer"]
         
@@ -85,7 +92,8 @@ class CardsBackend(Stack):
 
     def __add_resource_method(self, path: str, method: _HttpMethod, proxy_function: lambda_.Function) -> None:
         assert path in self.__resources, "First create the resource, then add a method to it."
-        self.__api_gateway.root.get_resource(path).add_method(method.value, api.LambdaIntegration(proxy_function))
+        self.__api_gateway.root.get_resource(path).add_method(method.value, api.LambdaIntegration(proxy_function), 
+            authorizer=self.__cognito_authorizer, authorization_type=api.AuthorizationType.COGNITO)
 
     def __package_dependencies(self, lambda_source_path: str) -> str:
         rmtree(installation_path:=path.join(lambda_source_path, "dependencies", "python"))

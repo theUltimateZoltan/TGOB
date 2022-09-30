@@ -1,3 +1,4 @@
+import cgi
 from aws_cdk import (
     Stack,
     RemovalPolicy,
@@ -17,7 +18,11 @@ class CardsUserData(Stack):
         retain_on_deletion = False
         self.__data_resource_removal_policy: RemovalPolicy = RemovalPolicy.RETAIN if retain_on_deletion else RemovalPolicy.DESTROY
         self.__create_user_pool()
-       
+    
+    @property
+    def user_pool(self) -> cognito.UserPool:
+        return self.__user_pool
+
     def __create_user_pool(self) -> None:
         self.__user_pool = cognito.UserPool(self, "dev_user_pool",
             user_pool_name = 'dev_user_pool',

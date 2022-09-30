@@ -2,4 +2,4 @@
 cd website
 ng build
 cd ../
-cdk deploy CardsFrontEnd
+cdk deploy Frontend

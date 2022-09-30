@@ -1,1 +1,6 @@
-<a [href]="get_login_url()">login</a>&nbsp;|&nbsp;<a [href]="get_signup_url()">sign up</a>
+<div *ngIf="!user_logged_in">
+    <a [href]="get_login_url()">login</a>&nbsp;|&nbsp;<a [href]="get_signup_url()">sign up</a>
+</div>
+<div *ngIf="user_logged_in">
+    Hi, user! <a [href]="get_login_url()">switch user</a>
+</div>

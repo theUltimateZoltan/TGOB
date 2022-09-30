@@ -8,8 +8,14 @@ import { Component, Input, OnInit } from '@angular/core';
 export class GameSessionComponent implements OnInit {
 
   @Input() session_guid: string = "";
-  is_coordinator: boolean = true;
+  
+  @Input()
+  api_access_jwt: Map<string, string> = new Map([
+    ["access_token", "invalid_token"]
+  ])
 
+  is_coordinator: boolean = true;
+  
   constructor() { }
 
   ngOnInit(): void {

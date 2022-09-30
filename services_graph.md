@@ -6,6 +6,7 @@ graph LR
     cloudfront_distribution-->s3_fe_bucket;
     user_pool_domin--implicit-->website_subdomain;
     user_pool_domin-->user_pool_tls_cert;
+    rest_api_authoriser-->cognito_user_pool;
 
     subgraph ENDPOINTS
         cloudfront_tls_cert;
@@ -15,8 +16,8 @@ graph LR
         website_subdomain;
     end
     subgraph USER_DATA
-        cognito_user_pool_client;
         cognito_user_pool;
+        cognito_user_pool_client;
         user_pool_domin;
     end
     subgraph BACKEND

@@ -14,7 +14,7 @@ import { UserComponent } from './user/user.component';
     GameSetupComponent,
     GameSessionComponent,
     CoordinatorComponent,
-    UserComponent
+    UserComponent,
   ],
   imports: [
     BrowserModule,
