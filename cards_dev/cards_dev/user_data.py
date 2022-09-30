@@ -48,7 +48,7 @@ class CardsUserData(Stack):
             account_recovery= cognito.AccountRecovery.EMAIL_AND_PHONE_WITHOUT_MFA,
             removal_policy= self.__data_resource_removal_policy
         )
-        
+
         self.__user_pool.add_client("dev_user_pool_client",
             user_pool_client_name="dev_user_pool_client",
             access_token_validity=Duration.hours(3),
