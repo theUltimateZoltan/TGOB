@@ -14,6 +14,7 @@ graph LR
         cloudfront_distribution;
         user_pool_tls_cert;
         website_subdomain;
+        game_progress_notifier;
     end
     subgraph USER_DATA
         cognito_user_pool;

@@ -6,6 +6,7 @@ from aws_cdk import (
     aws_s3 as s3,
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as origins,
+    aws_sns as sns
 )
 from constructs import Construct
 
@@ -19,6 +20,8 @@ class CardsEndpoints(Stack):
 
         self.__setup_hosted_zone()
         self.__setup_user_pool_endpoints()
+        self.__setup_notifications_endpoint()
+
 
     @property
     def api_domain(self) -> str:
@@ -39,6 +42,10 @@ class CardsEndpoints(Stack):
     @property
     def user_pools_tls_certificate(self) -> acm.Certificate:
         return self.__user_pools_tls_certificate
+
+    @property
+    def progress_notification_topic(self) -> sns.Topic:
+        return self.__game_progress_sns
 
     def __setup_hosted_zone(self) -> None:
         self.__hosted_zone = route53.HostedZone.from_lookup(self, "cards_dns", 
@@ -78,6 +85,11 @@ class CardsEndpoints(Stack):
             hosted_zone=self.hosted_zone,
             validation=acm.CertificateValidation.from_dns(self.hosted_zone),
             region="us-east-1"
+        )
+
+    def __setup_notifications_endpoint(self) -> None:
+        self.__game_progress_sns = sns.Topic(self, "dev_game_progress_notifier",
+            topic_name="dev_game_progress_notifier",
         )
   
     
