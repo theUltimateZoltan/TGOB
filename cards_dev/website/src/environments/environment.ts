@@ -10,6 +10,7 @@ export const environment = {
   cognito_user_pool_id: "us-west-2_zd1xUQuZy",
   cognito_identity_pool_id: "us-west-2:8f801c2c-eb92-44cd-a16d-1aac951ea59e",
   aws_region: "us-west-2",
+  progress_notifier_arn : "arn:aws:sns:us-west-2:451230547744:dev_game_progress_notifier"
 
 };
 

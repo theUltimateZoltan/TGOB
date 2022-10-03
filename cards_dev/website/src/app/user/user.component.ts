@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { config, CognitoIdentity, Config, CognitoIdentityCredentials } from 'aws-sdk';
-import { jsDocComment } from '@angular/compiler';
+import { CognitoIdentityCredentials, Config } from 'aws-sdk';
+import { config } from 'aws-sdk/index';
 
 @Component({
   selector: 'app-user',
@@ -42,20 +42,6 @@ export class UserComponent implements OnInit {
         map.set(pair.split("=")[0], pair.split("=")[1])
         return map
       }, new Map())
-
-      var str = `cognito-idp.${environment.aws_region}.amazonaws.com/${environment.cognito_user_pool_client_id}`
-      var myCredentials = new CognitoIdentityCredentials({
-        IdentityPoolId: environment.cognito_identity_pool_id,
-        Logins: {
-          str : jwt.get("id_token")
-        }
-      });
-      var myConfig = new Config({
-        credentials: myCredentials, region: 'us-west-2'
-      });
-      console.log(myConfig.credentials)
-
-      config.update({"region": "us-west-2"})
 
       this.api_access_jwt.emit(jwt)
       window.location.href = window.location.href.split("#")[0]
