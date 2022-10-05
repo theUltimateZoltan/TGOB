@@ -25,6 +25,6 @@ def __generate_new_session_id(table: Table) -> str:
 def lambda_handler(event, context, session_table_mock: Table=None) -> str:
     table: Table = session_table_mock if session_table_mock else session_table
     new_session_id: str = __generate_new_session_id(table)
-    new_session: GameSession = GameSession(new_session_id, GameSession.Phase.Enrollment, 0, [json.loads(event.get("body")).get("creator_id")])
+    new_session: GameSession = GameSession(new_session_id, GameSession.Phase.Enrollment, 0, [])
     table.put_item(Item=new_session.to_dict())
     return http_response(new_session.to_dict())
