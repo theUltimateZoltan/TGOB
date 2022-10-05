@@ -7,6 +7,7 @@ from typing import List
 from aws_cdk import (
     Stack,
     aws_apigateway as api,
+    aws_apigatewayv2 as apiv2,
     aws_lambda as lambda_,
     RemovalPolicy,
     aws_certificatemanager as acm,
@@ -32,7 +33,7 @@ class CardsBackend(Stack):
         self.__endpoints_stack = endpoints_stack
         self.__user_data_stack = user_data_stack
         self.__create_backend_resources()
-        self.__define_api()
+        self.__define_rest_api()
 
     @property
     def __lambda_shared_layers_path(self) -> str:
@@ -43,13 +44,29 @@ class CardsBackend(Stack):
         return self.__lambdas
 
     def __create_backend_resources(self) -> None:
-        self.__api_gateway = api.RestApi(self, "cards_api_gateway",
+        self.__rest_api_gateway = api.RestApi(self, "cards_rest_api",
             default_cors_preflight_options=api.CorsOptions(
                 allow_origins=api.Cors.ALL_ORIGINS,
                 allow_methods=api.Cors.ALL_METHODS,
                 allow_headers=api.Cors.DEFAULT_HEADERS,
                 allow_credentials=True
             )
+        )
+
+        self.__websocket_api_gateway = apiv2.CfnApi(self, "cards_websocket_api",
+            cors_configuration=apiv2.CfnApi.CorsProperty(
+                allow_headers=api.Cors.DEFAULT_HEADERS,
+                allow_methods=api.Cors.ALL_METHODS,
+                allow_origins=api.Cors.ALL_ORIGINS,
+                expose_headers=api.Cors.DEFAULT_HEADERS,
+                allow_credentials=True
+            ),
+            disable_execute_api_endpoint=True,
+            disable_schema_validation=False,
+            fail_on_warnings=False,
+            protocol_type="WEBSOCKET",
+            route_selection_expression="$request.body.action",
+            api_key_selection_expression="$request.header.x-api-key"
         )
 
         self.__api_tls_certificate = acm.DnsValidatedCertificate(self, "api_tls_certificate",
@@ -59,15 +76,23 @@ class CardsBackend(Stack):
             region="us-west-2"
         )
 
-        self.__api_gateway.add_domain_name("rest_api_domain_name",
-            domain_name=self.__endpoints_stack.api_domain,
+        self.__rest_api_gateway.add_domain_name("rest_api_domain_name",
+            domain_name=self.__endpoints_stack.rest_api_domain,
             certificate=self.__api_tls_certificate
         )
 
-        route53.ARecord(self, "api_domain_alias",
+        api.CfnDomainName(self, "websocket_api_domain_alias",
+            certificate_arn=self.__api_tls_certificate.certificate_arn,
+            domain_name=self.__endpoints_stack.websocket_api_domain,
+            endpoint_configuration=api.CfnDomainName.EndpointConfigurationProperty(
+                types=["EDGE"]
+            ),
+        )
+
+        route53.ARecord(self, "rest_api_domain_alias",
             zone=self.__endpoints_stack.hosted_zone,
-            record_name=self.__endpoints_stack.api_domain,
-            target=route53.RecordTarget.from_alias(targets.ApiGateway(self.__api_gateway))
+            record_name=self.__endpoints_stack.rest_api_domain,
+            target=route53.RecordTarget.from_alias(targets.ApiGateway(self.__rest_api_gateway))
         )
 
         self.__cognito_authorizer = api.CognitoUserPoolsAuthorizer(self, "user_pool_rest_api_authorizer",
@@ -75,7 +100,7 @@ class CardsBackend(Stack):
             cognito_user_pools=[self.__user_data_stack.user_pool]
         )
 
-    def __define_api(self) -> None:
+    def __define_rest_api(self) -> None:
         self.__resources = ["session", "inquiry", "answer"]
         
         self.__shared_backend_layer = lambda_.LayerVersion(self, "shared_backend_layer",
@@ -85,14 +110,14 @@ class CardsBackend(Stack):
         )
 
         for resource in self.__resources:
-            self.__api_gateway.root.add_resource(resource)
+            self.__rest_api_gateway.root.add_resource(resource)
             
         self.__add_resource_method("session", _HttpMethod.POST, self.__provision_backend_lambda_function("create_new_session"))
         # self.__add_resource_method("session", _HttpMethod.GET, self.__provision_lambda_function("get_session_by_id"))
 
     def __add_resource_method(self, path: str, method: _HttpMethod, proxy_function: lambda_.Function) -> None:
         assert path in self.__resources, "First create the resource, then add a method to it."
-        self.__api_gateway.root.get_resource(path).add_method(method.value, api.LambdaIntegration(proxy_function), 
+        self.__rest_api_gateway.root.get_resource(path).add_method(method.value, api.LambdaIntegration(proxy_function), 
             authorizer=self.__cognito_authorizer, authorization_type=api.AuthorizationType.COGNITO)
 
     def __package_dependencies(self, lambda_source_path: str) -> str:
