@@ -34,7 +34,7 @@ class CardsBackend(Stack):
         self.__endpoints_stack = endpoints_stack
         self.__user_data_stack = user_data_stack
         self.__create_backend_resources()
-        self.__define_rest_api()
+        self.__define_api()
 
     @property
     def __lambda_shared_layers_path(self) -> str:
@@ -114,8 +114,9 @@ class CardsBackend(Stack):
             target=route53.RecordTarget.from_alias(targets.ApiGateway(self.__rest_api_gateway))
         )
 
-    def __define_rest_api(self) -> None:
-        self.__resources = ["session", "inquiry", "answer"]
+    def __define_api(self) -> None:
+        self.__rest_resources = ["session"]
+        self.__websocket_routes = ["$connect", "$disconnect"]
         
         self.__shared_backend_layer = lambda_.LayerVersion(self, "shared_backend_layer",
             removal_policy=RemovalPolicy.DESTROY,
@@ -123,16 +124,22 @@ class CardsBackend(Stack):
             compatible_runtimes=[lambda_.Runtime.PYTHON_3_9]
         )
 
-        for resource in self.__resources:
+        for resource in self.__rest_resources:
             self.__rest_api_gateway.root.add_resource(resource)
             
-        self.__add_resource_method("session", _HttpMethod.POST, self.__provision_backend_lambda_function("create_new_session"))
-        # self.__add_resource_method("session", _HttpMethod.GET, self.__provision_lambda_function("get_session_by_id"))
+        self.__add_rest_resource_method("session", _HttpMethod.POST, self.__provision_backend_lambda_function("create_new_session"))
 
-    def __add_resource_method(self, path: str, method: _HttpMethod, proxy_function: lambda_.Function) -> None:
-        assert path in self.__resources, "First create the resource, then add a method to it."
+    def __add_rest_resource_method(self, path: str, method: _HttpMethod, proxy_function: lambda_.Function) -> None:
+        assert path in self.__rest_resources, "First create the resource, then add a method to it."
         self.__rest_api_gateway.root.get_resource(path).add_method(method.value, api.LambdaIntegration(proxy_function), 
             authorizer=self.__cognito_authorizer, authorization_type=api.AuthorizationType.COGNITO)
+
+    def __add_websocket_route_method(self, path: str, proxy_function: lambda_.Function) -> None:
+         self.__websocket_api.add_route(
+            route_key=path,
+            integration=apiv2_integrations.WebSocketLambdaIntegration(f"websocket_{path}_proxy_integration", proxy_function),
+           # authorizer=self.__cognito_authorizer TODO add on connect only
+            )
 
     def __package_dependencies(self, lambda_source_path: str) -> str:
         rmtree(installation_path:=path.join(lambda_source_path, "dependencies", "python"))
