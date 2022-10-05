@@ -1,9 +1,6 @@
-from abc import abstractclassmethod
 from dataclasses import dataclass, asdict, is_dataclass
 from enum import Enum
-from mimetypes import init
-from typing import Iterable, Mapping
-import json
+from typing import Iterable, Union
 
 class GameDataClass:
     def __init__(self) -> None:
@@ -18,11 +15,24 @@ class Player(GameDataClass):
     callback_url: str
 
 @dataclass
+class GameRound(GameDataClass):
+    class Phase(Enum):
+        Open="open"
+        Closed="closed"
+
+    phase: Phase
+    session_id: str
+    winner_id: Union[str,  None]
+    question_card_text: str
+    answer_cards_suggested: Iterable[str]
+    winning_answer_index: int=0
+
+@dataclass
 class GameSession(GameDataClass):
     class Phase(Enum):
         Enrollment="enrollment"
-        Inquiry="inquiry"
-        Applaud="applaud"
+        InProgress="inprogress"
+        Finished="complete"
 
     session_id: str  # must be the key in dynamodb sessions table
     phase: Phase
