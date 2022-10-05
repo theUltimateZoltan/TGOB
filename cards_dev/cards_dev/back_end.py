@@ -7,7 +7,8 @@ from typing import List
 from aws_cdk import (
     Stack,
     aws_apigateway as api,
-    aws_apigatewayv2 as apiv2,
+    aws_apigatewayv2_alpha as apiv2,
+    aws_apigatewayv2_integrations_alpha as apiv2_integrations,
     aws_lambda as lambda_,
     RemovalPolicy,
     aws_certificatemanager as acm,
@@ -44,6 +45,14 @@ class CardsBackend(Stack):
         return self.__lambdas
 
     def __create_backend_resources(self) -> None:
+
+        self.__api_tls_certificate = acm.DnsValidatedCertificate(self, "api_tls_certificate",
+            domain_name=f"*.{self.__endpoints_stack.domain}",
+            hosted_zone=self.__endpoints_stack.hosted_zone,
+            validation=acm.CertificateValidation.from_dns(self.__endpoints_stack.hosted_zone),
+            region="us-west-2"
+        )
+
         self.__rest_api_gateway = api.RestApi(self, "cards_rest_api",
             default_cors_preflight_options=api.CorsOptions(
                 allow_origins=api.Cors.ALL_ORIGINS,
@@ -53,51 +62,56 @@ class CardsBackend(Stack):
             )
         )
 
-        self.__websocket_api_gateway = apiv2.CfnApi(self, "cards_websocket_api",
-            cors_configuration=apiv2.CfnApi.CorsProperty(
-                allow_headers=api.Cors.DEFAULT_HEADERS,
-                allow_methods=api.Cors.ALL_METHODS,
-                allow_origins=api.Cors.ALL_ORIGINS,
-                expose_headers=api.Cors.DEFAULT_HEADERS,
-                allow_credentials=True
+        self.__websocket_api = apiv2.WebSocketApi(self, "cards_websocket_api")
+        prod_stage = apiv2.WebSocketStage(self, 'cards_websocket_api_prod_stage', 
+            stage_name="prod",
+            web_socket_api=self.__websocket_api,
+            auto_deploy=True,
+        )
+
+        self.__setup_custom_websocket_domain(prod_stage)
+        self.__setup_custom_rest_api_domain()
+
+        self.__cognito_authorizer = api.CognitoUserPoolsAuthorizer(self, "user_pool_rest_api_authorizer",
+            authorizer_name="user_pool_rest_api_authorizer",
+            cognito_user_pools=[self.__user_data_stack.user_pool]
+        )
+
+    def __setup_custom_websocket_domain(self, prod_stage: apiv2.WebSocketStage) -> None:
+        domainName = apiv2.DomainName(self, 'websocket_api_domain_name', 
+            certificate=self.__api_tls_certificate,
+            domain_name=self.__endpoints_stack.websocket_api_domain,
+        )
+
+        apiMapping = apiv2.ApiMapping(self, 'websocket_api_alias_mapping', 
+            api=self.__websocket_api,
+            domain_name=domainName,
+            stage=prod_stage
+        )
+
+        apiMapping.node.add_dependency(domainName)
+
+        route53.ARecord(self, 'websocket_api_alias', 
+            record_name= self.__endpoints_stack.websocket_api_domain,
+            zone= self.__endpoints_stack.hosted_zone,
+            target= route53.RecordTarget.from_alias(
+                targets.ApiGatewayv2DomainProperties(
+                    domainName.regional_domain_name,
+                    domainName.regional_hosted_zone_id,
+                ),
             ),
-            disable_execute_api_endpoint=True,
-            disable_schema_validation=False,
-            fail_on_warnings=False,
-            protocol_type="WEBSOCKET",
-            route_selection_expression="$request.body.action",
-            api_key_selection_expression="$request.header.x-api-key"
         )
 
-        self.__api_tls_certificate = acm.DnsValidatedCertificate(self, "api_tls_certificate",
-            domain_name=f"*.{self.__endpoints_stack.domain}",
-            hosted_zone=self.__endpoints_stack.hosted_zone,
-            validation=acm.CertificateValidation.from_dns(self.__endpoints_stack.hosted_zone),
-            region="us-west-2"
-        )
-
+    def __setup_custom_rest_api_domain(self) -> None:
         self.__rest_api_gateway.add_domain_name("rest_api_domain_name",
             domain_name=self.__endpoints_stack.rest_api_domain,
             certificate=self.__api_tls_certificate
-        )
-
-        api.CfnDomainName(self, "websocket_api_domain_alias",
-            certificate_arn=self.__api_tls_certificate.certificate_arn,
-            domain_name=self.__endpoints_stack.websocket_api_domain,
-            endpoint_configuration=api.CfnDomainName.EndpointConfigurationProperty(
-                types=["EDGE"]
-            ),
         )
 
         route53.ARecord(self, "rest_api_domain_alias",
             zone=self.__endpoints_stack.hosted_zone,
             record_name=self.__endpoints_stack.rest_api_domain,
             target=route53.RecordTarget.from_alias(targets.ApiGateway(self.__rest_api_gateway))
-        )
-
-        self.__cognito_authorizer = api.CognitoUserPoolsAuthorizer(self, "user_pool_rest_api_authorizer",
-            authorizer_name="user_pool_rest_api_authorizer",
-            cognito_user_pools=[self.__user_data_stack.user_pool]
         )
 
     def __define_rest_api(self) -> None:
