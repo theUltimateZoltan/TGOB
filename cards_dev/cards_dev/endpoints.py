@@ -6,7 +6,6 @@ from aws_cdk import (
     aws_s3 as s3,
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as origins,
-    aws_sns as sns
 )
 from constructs import Construct
 
@@ -14,18 +13,22 @@ class CardsEndpoints(Stack):
     def __init__(self, scope: Construct, construct_id: str ,**kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         self.__base_domain: str = "eladlevy.click"
-        self.__api_subdomain: str = "api"
+        self.__rest_api_subdomain: str = "restapi"
+        self.__websocket_api_subdomain: str = "wsapi"
         self.__user_pool_subdomain: str = "auth"
         self.__environment_subdomain: str = "devcards"
 
         self.__setup_hosted_zone()
         self.__setup_user_pool_endpoints()
-        self.__setup_notifications_endpoint()
 
 
     @property
-    def api_domain(self) -> str:
-        return ".".join([self.__api_subdomain, self.domain])
+    def rest_api_domain(self) -> str:
+        return ".".join([self.__rest_api_subdomain, self.domain])
+
+    @property
+    def websocket_api_domain(self) -> str:
+        return ".".join([self.__websocket_api_subdomain, self.domain])
 
     @property
     def user_pool_domain(self) -> str:
@@ -42,10 +45,6 @@ class CardsEndpoints(Stack):
     @property
     def user_pools_tls_certificate(self) -> acm.Certificate:
         return self.__user_pools_tls_certificate
-
-    @property
-    def progress_notification_topic(self) -> sns.Topic:
-        return self.__game_progress_sns
 
     def __setup_hosted_zone(self) -> None:
         self.__hosted_zone = route53.HostedZone.from_lookup(self, "cards_dns", 
@@ -86,10 +85,3 @@ class CardsEndpoints(Stack):
             validation=acm.CertificateValidation.from_dns(self.hosted_zone),
             region="us-east-1"
         )
-
-    def __setup_notifications_endpoint(self) -> None:
-        self.__game_progress_sns = sns.Topic(self, "dev_game_progress_notifier",
-            topic_name="dev_game_progress_notifier",
-        )
-  
-    
