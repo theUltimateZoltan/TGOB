@@ -19,7 +19,8 @@ class CardsGameData(Stack):
         self.__session_data = dyndb.Table(self, "session_data", 
             table_name="dev_session_data",
             removal_policy=self.__data_resource_removal_policy,
-            partition_key= dyndb.Attribute(name="session_id", type=dyndb.AttributeType.STRING)
+            partition_key= dyndb.Attribute(name="session_id", type=dyndb.AttributeType.STRING),
+            sort_key=dyndb.Attribute(name="round", type=dyndb.AttributeType.NUMBER)
         )
         for function in self.__backend.lambdas:
             self.__session_data.grant_read_write_data(function)

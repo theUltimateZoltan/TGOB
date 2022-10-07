@@ -1,12 +1,8 @@
 from backend_base_layer import http_response, dynamodb_key_exists
 from models import GameSession
 import wonderwords
-import boto3
 from mypy_boto3_dynamodb.service_resource import Table
-import json
 
-dynamodb = boto3.resource('dynamodb')
-session_table = dynamodb.Table("dev_session_data")
 randomword_generator = wonderwords.RandomWord()
 
 def __generate_new_session_id(table: Table) -> str:
