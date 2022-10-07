@@ -1,9 +1,7 @@
-from copy import copy
 from datetime import datetime
 import logging
 import json
-import re
-from typing import Any, List, Union
+from typing import List, Union
 from mypy_boto3_dynamodb.service_resource import Table
 from mypy_boto3_s3.service_resource import Bucket
 from models import GameRound, GameSession, Phase, QuestionCard

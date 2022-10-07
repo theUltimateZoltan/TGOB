@@ -79,4 +79,4 @@ class GameSession(SessionDataClass):
     recent_rounds: List[GameRound]
 
     def to_dynamodb_object(self) -> dict:
-         return super().to_dynamodb_object(["active_round", "recent_rounds"], {"round": 0})
+         return super().to_dynamodb_object(["active_round", "recent_rounds", "phase"], {"round": 0, "phase": self.phase.value})
