@@ -71,7 +71,7 @@ class GameSession(SessionDataClass):
     session_id: str
     phase: Phase
     coordinator_callback_url: str
-    players_ids: Iterable[str]
+    players_callback_urls: Iterable[str]
     active_round: Union[GameRound, None]
     recent_rounds: List[GameRound]
 

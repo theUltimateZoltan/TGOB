@@ -4,6 +4,7 @@ import json
 import re
 from typing import Any, List, Union
 from mypy_boto3_dynamodb.service_resource import Table
+from mypy_boto3_s3.service_resource import Bucket
 from models import GameRound, GameSession, Phase, QuestionCard
 import boto3
 
@@ -24,19 +25,21 @@ def http_response(body: dict, status_code: int=200) -> dict:
         }
 
 
-class SessionData:
+class GameData:
 ##
 ## Before changing database related methods, consult the wiki: https://github.com/theUltimateZoltan/TGOB/wiki/Database-design.
 ##
     
     dynamodb = boto3.resource('dynamodb')
-    session_table = dynamodb.Table("dev_session_data")
-    initial_session = GameSession("", GameSession.Phase.Enrollment)
+    s3_resource = boto3.resource('s3')
+    session_table: Table = dynamodb.Table("dev_session_data")
+    cards_table: Table = dynamodb.Table("dev_cards_data")
+    session_archive: Bucket = s3_resource.Bucket("dev.session-archive")
 
     @staticmethod
     def get_round(session_id: str ,round: int) -> Union[GameRound, None]:
         assert round > 0, "Round 0 is reserved for game metadata."
-        query_result: dict = SessionData.session_table.get_item(
+        query_result: dict = GameData.session_table.get_item(
             Key={"session_id": session_id, "round": round},
             ConsistentRead=True
         )
@@ -52,7 +55,7 @@ class SessionData:
 
     @staticmethod
     def get_session(session_id: str) -> Union[GameSession, None]:
-        query_result: dict = SessionData.session_table.query(
+        query_result: dict = GameData.session_table.query(
             KeyConditionExpression='session_id = :session_id',
             ExpressionAttributeValues={
                 ':session_id': {'S': session_id}
@@ -66,22 +69,22 @@ class SessionData:
                 session_id=metadata_object.get("session_id"),
                 phase=Phase[metadata_object.get("phase")],
                 coordinator_callback_url=metadata_object.get("coordinator_callback_url"),
-                players_ids=metadata_object.get("players_ids"),
+                players_callback_urls=metadata_object.get("players_ids"),
                 active_round=retrieved_round_objects[-1] if len(retrieved_round_objects) > 1 else None,
                 recent_rounds=retrieved_round_objects[1:-1] if len(retrieved_round_objects) > 2 else [],
             )
 
     @staticmethod
-    def create_new_session(session_id: str, coordinator_callback_url) -> GameSession:
+    def create_new_session(session_id: str, coordinator_callback_url: str) -> GameSession:
         initial_session: GameSession = GameSession(
             session_id=session_id, 
             phase=Phase.Enrollment,
             coordinator_callback_url=coordinator_callback_url,
-            players_ids=[],
+            players_callback_urls=[],
             active_round=None,
             recent_rounds=[]
             )
-        SessionData.session_table.put_item(initial_session.to_dynamodb_object())
+        GameData.session_table.put_item(initial_session.to_dynamodb_object())
         return initial_session
 
     @staticmethod
@@ -89,7 +92,7 @@ class SessionData:
         def pick_question_card() -> QuestionCard:
             pass
 
-        extended_session: GameSession = SessionData.get_session(session_id)
+        extended_session: GameSession = GameData.get_session(session_id)
         current_round: GameRound = extended_session.active_round
         new_round = GameRound(
             session_id=current_round.session_id,
@@ -98,11 +101,11 @@ class SessionData:
             question_card_text=pick_question_card().text,
             answer_cards_suggested=[],
         )
-        SessionData.session_table.put_item(new_round.to_dynamodb_object())
+        GameData.session_table.put_item(new_round.to_dynamodb_object())
         extended_session.recent_rounds.append(extended_session.active_round)
         extended_session.active_round = new_round
         if len(extended_session.recent_rounds) >= 4:
-            SessionData.archive_rounds(extended_session.recent_rounds)
+            GameData.archive_rounds(extended_session.recent_rounds)
             extended_session.recent_rounds = []
 
         return new_round
