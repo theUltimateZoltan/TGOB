@@ -1,4 +1,5 @@
 from copy import copy
+from datetime import datetime
 import logging
 import json
 import re
@@ -35,6 +36,7 @@ class GameData:
     session_table: Table = dynamodb.Table("dev_session_data")
     cards_table: Table = dynamodb.Table("dev_cards_data")
     session_archive: Bucket = s3_resource.Bucket("dev.session-archive")
+    recent_rounds_buffer_size = 4
 
     @staticmethod
     def get_round(session_id: str ,round: int) -> Union[GameRound, None]:
@@ -90,7 +92,7 @@ class GameData:
     @staticmethod
     def append_new_round(session_id: str) -> GameRound:
         def pick_question_card() -> QuestionCard:
-            pass
+            pass  # follow the DynamoDB Categorized example here: https://bahr.dev/2021/01/07/serverless-random-records/#dynamodb-fully-random
 
         extended_session: GameSession = GameData.get_session(session_id)
         current_round: GameRound = extended_session.active_round
@@ -104,12 +106,24 @@ class GameData:
         GameData.session_table.put_item(new_round.to_dynamodb_object())
         extended_session.recent_rounds.append(extended_session.active_round)
         extended_session.active_round = new_round
-        if len(extended_session.recent_rounds) >= 4:
+        if len(extended_session.recent_rounds) >= GameData.recent_rounds_buffer_size:
             GameData.archive_rounds(extended_session.recent_rounds)
             extended_session.recent_rounds = []
 
         return new_round
 
     @staticmethod
-    def archive_rounds(rounds: List[GameRound]) -> None:
-        pass  # check buffer size and send to S3 whatever necessary, remember to delete buffer after copying
+    def archive_rounds(session_id: str ,rounds: List[GameRound]) -> None:
+        dict_representation: List[dict] = [r.to_archive_object() for r in rounds]
+        GameData.session_archive.put_object(
+            Key=f"{datetime.now().year}-{datetime.now().month}/{session_id}/{rounds[0].round}_to_{rounds[-1].round}.json",
+            Body=json.dumps(dict_representation)
+        )
+        with GameData.session_table.batch_writer() as batch: 
+            for r in rounds:
+                batch.delete_item(
+                    Key={
+                        "session_id": session_id,
+                        "round": r.round
+                    }
+                )
