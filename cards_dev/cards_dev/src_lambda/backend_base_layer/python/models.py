@@ -65,6 +65,9 @@ class GameRound(SessionDataClass):
     def to_dynamodb_object(self) -> dict:
          return super().to_dynamodb_object([], {})
 
+    def to_archive_object(self) -> dict:
+        return self.to_dict()  # TODO what should be stored in archive?
+
 
 @dataclass
 class GameSession(SessionDataClass):
