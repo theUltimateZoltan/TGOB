@@ -1,9 +1,10 @@
+from copy import copy
 import logging
 import json
 import re
-from typing import Any, Union
+from typing import Any, List, Union
 from mypy_boto3_dynamodb.service_resource import Table
-from models import GameRound, GameSession, Phase
+from models import GameRound, GameSession, Phase, QuestionCard
 import boto3
 
 logger = logging.getLogger()
@@ -82,3 +83,30 @@ class SessionData:
             )
         SessionData.session_table.put_item(initial_session.to_dynamodb_object())
         return initial_session
+
+    @staticmethod
+    def append_new_round(session_id: str) -> GameRound:
+        def pick_question_card() -> QuestionCard:
+            pass
+
+        extended_session: GameSession = SessionData.get_session(session_id)
+        current_round: GameRound = extended_session.active_round
+        new_round = GameRound(
+            session_id=current_round.session_id,
+            round=current_round.round + 1,
+            winner_id= None,
+            question_card_text=pick_question_card().text,
+            answer_cards_suggested=[],
+        )
+        SessionData.session_table.put_item(new_round.to_dynamodb_object())
+        extended_session.recent_rounds.append(extended_session.active_round)
+        extended_session.active_round = new_round
+        if len(extended_session.recent_rounds) >= 4:
+            SessionData.archive_rounds(extended_session.recent_rounds)
+            extended_session.recent_rounds = []
+
+        return new_round
+
+    @staticmethod
+    def archive_rounds(rounds: List[GameRound]) -> None:
+        pass  # check buffer size and send to S3 whatever necessary, remember to delete buffer after copying
