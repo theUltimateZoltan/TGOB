@@ -17,7 +17,7 @@ def __generate_new_session_id() -> str:
 
     return attempt
 
-def lambda_handler(event, context) -> str:
+def lambda_handler(event: dict, context: dict) -> str:
     new_session_id: str = __generate_new_session_id()
     new_session: GameSession = GameData.create_new_session(new_session_id)
-    return http_response(new_session.to_dict())
+    return http_response(new_session.to_response_object())

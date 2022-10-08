@@ -18,12 +18,20 @@ def session_table() -> Table:
                 {
                     'AttributeName': 'session_id',
                     'KeyType': 'HASH'
+                },
+                {
+                    'AttributeName': 'round',
+                    'KeyType': 'RANGE'
                 }
             ],
             AttributeDefinitions=[
                 {
                     'AttributeName': 'session_id',
                     'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'round',
+                    'AttributeType': 'N'
                 }
             ],
             BillingMode='PAY_PER_REQUEST'
@@ -34,30 +42,25 @@ def arbitrary_game_session() -> GameSession:
     return GameSession("Existingid", Phase.InProgress, "", ["player1", "player2"], active_round=None, recent_rounds=[])
 
 def test_generated_id_unique(session_table: Table, arbitrary_game_session: GameSession):
+    # Keep in mind the race condition not being tested here. See https://advancedweb.hu/how-to-properly-implement-unique-constraints-in-dynamodb/
     with patch("cards_dev.src_lambda.create_new_session.create_new_session.randomword_generator") as randomword_generator_mock:
-        with patch("cards_dev.src_lambda.backend_base_layer.GameData.dynamodb") as mock_session_table:
-            mock_session_table = session_table  # ??
-            number_of_words_in_sequence = 2
-            randomword_generator_mock.word.side_effect = (
-                [arbitrary_game_session.session_id]+
-                [""] * (number_of_words_in_sequence-1)+
-                ["AnotherId"]+
-                [""] * (number_of_words_in_sequence-1)
-            )
+        GameData.session_table = session_table
+        number_of_words_in_sequence = 2
+        randomword_generator_mock.word.side_effect = (
+            [arbitrary_game_session.session_id]+
+            [""] * (number_of_words_in_sequence-1)+
+            ["AnotherId"]+
+            [""] * (number_of_words_in_sequence-1)
+        )
 
-            session_table.put_item(Item=arbitrary_game_session.to_dict())
-            create_new_session.lambda_handler({"creator_id": "tester"}, {})
+        session_table.put_item(Item=arbitrary_game_session.to_dynamodb_object())
+        create_new_session.lambda_handler({}, {})
 
-            assert GameData.get_session(session_table, "session_id", arbitrary_game_session.id)
-            assert GameData.get_session(session_table, "session_id", "Anotherid")  
+        assert GameData.get_session(arbitrary_game_session.session_id)
+        assert GameData.get_session("Anotherid")  
 
 def test_simple_session_creation(session_table):
-    response = create_new_session.lambda_handler({"creator_id": "some_test_user"}, {}, session_table_mock=session_table)
+    GameData.session_table = session_table
+    response = create_new_session.lambda_handler({}, {})
     session_id: str = json.loads(response.get("body")).get("session_id")
     assert GameData.get_session(session_id)
-
-
-def test_requester_is_added_as_player(session_table):
-    response = create_new_session.lambda_handler({"creator_id": "some_test_user"}, {}, session_table_mock=session_table)
-    session_id: str = json.loads(response.get("body")).get("session_id")
-    assert "some_test_user" in GameData.get_session(session_id)["players_callback"]

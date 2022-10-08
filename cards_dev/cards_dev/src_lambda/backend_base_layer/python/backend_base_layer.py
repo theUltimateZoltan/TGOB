@@ -6,6 +6,7 @@ from mypy_boto3_dynamodb.service_resource import Table
 from mypy_boto3_s3.service_resource import Bucket
 from models import GameRound, GameSession, Phase, QuestionCard
 import boto3
+from boto3.dynamodb.conditions import Key
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -56,18 +57,18 @@ class GameData:
     @staticmethod
     def get_session(session_id: str) -> Union[GameSession, None]:
         query_result: dict = GameData.session_table.query(
-            KeyConditionExpression='session_id = :session_id',
-            ExpressionAttributeValues={
-                ':session_id': {'S': session_id}
-            }
+            KeyConditionExpression=Key("session_id").eq(session_id),
+            ConsistentRead=True
         )
+
+
         if query_result.get("Count"):
             retrieved_round_objects: list = query_result.get("Items", None)
             retrieved_round_objects.sort(key=lambda round_obj: round_obj.get("round"))
             metadata_object: dict = retrieved_round_objects[0]
             return GameSession(
                 session_id=metadata_object.get("session_id"),
-                phase=Phase[metadata_object.get("phase")],
+                phase=Phase(metadata_object.get("phase")),
                 coordinator_callback_url=metadata_object.get("coordinator_callback_url"),
                 players_callback_urls=metadata_object.get("players_ids"),
                 active_round=retrieved_round_objects[-1] if len(retrieved_round_objects) > 1 else None,
@@ -75,16 +76,16 @@ class GameData:
             )
 
     @staticmethod
-    def create_new_session(session_id: str, coordinator_callback_url: str) -> GameSession:
+    def create_new_session(session_id: str) -> GameSession:
         initial_session: GameSession = GameSession(
             session_id=session_id, 
             phase=Phase.Enrollment,
-            coordinator_callback_url=coordinator_callback_url,
+            coordinator_callback_url=None,
             players_callback_urls=[],
             active_round=None,
             recent_rounds=[]
             )
-        GameData.session_table.put_item(initial_session.to_dynamodb_object())
+        GameData.session_table.put_item(Item=initial_session.to_dynamodb_object())
         return initial_session
 
     @staticmethod
