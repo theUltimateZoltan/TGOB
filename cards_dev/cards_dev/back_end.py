@@ -6,6 +6,7 @@ import subprocess
 import sys
 from typing import List
 from aws_cdk import (
+    Duration,
     Stack,
     aws_apigateway as api,
     aws_apigatewayv2_alpha as apiv2,
@@ -64,13 +65,13 @@ class CardsBackend(Stack):
         )
 
         self.__websocket_api = apiv2.WebSocketApi(self, "cards_websocket_api")
-        prod_stage = apiv2.WebSocketStage(self, 'cards_websocket_api_prod_stage', 
+        self.__websocket_prod_stage: apiv2.WebSocketStage = apiv2.WebSocketStage(self, 'cards_websocket_api_prod_stage', 
             stage_name="prod",
             web_socket_api=self.__websocket_api,
             auto_deploy=True,
         )
 
-        self.__setup_custom_websocket_domain(prod_stage)
+        self.__setup_custom_websocket_domain()
         self.__setup_custom_rest_api_domain()
 
         self.__cognito_authorizer = api.CognitoUserPoolsAuthorizer(self, "user_pool_rest_api_authorizer",
@@ -87,7 +88,7 @@ class CardsBackend(Stack):
                 compatible_runtimes=[lambda_.Runtime.PYTHON_3_9]
             )
 
-    def __setup_custom_websocket_domain(self, prod_stage: apiv2.WebSocketStage) -> None:
+    def __setup_custom_websocket_domain(self) -> None:
         domainName = apiv2.DomainName(self, 'websocket_api_domain_name', 
             certificate=self.__api_tls_certificate,
             domain_name=self.__endpoints_stack.websocket_api_domain,
@@ -95,7 +96,7 @@ class CardsBackend(Stack):
         apiMapping = apiv2.ApiMapping(self, 'websocket_api_alias_mapping', 
             api=self.__websocket_api,
             domain_name=domainName,
-            stage=prod_stage
+            stage=self.__websocket_prod_stage
         )
         apiMapping.node.add_dependency(domainName)
 
@@ -144,7 +145,7 @@ class CardsBackend(Stack):
             authorizer=self.__cognito_authorizer, authorization_type=api.AuthorizationType.COGNITO)
 
     def __add_websocket_route_method(self, path: str, proxy_function: lambda_.Function) -> None:
-         self.__websocket_api.add_route(
+        route = self.__websocket_api.add_route(
             route_key=path,
             integration=apiv2_integrations.WebSocketLambdaIntegration(f"websocket_{path}_proxy_integration", proxy_function),
            # authorizer=self.__cognito_authorizer TODO add on connect only
@@ -174,7 +175,8 @@ class CardsBackend(Stack):
             runtime=runtime,
             handler=f"{main_file_name}.{handler_function}",
             code=lambda_.Code.from_asset(function_path),
-            layers=[self.__common_dependencies_layer ,self.__shared_backend_layer ,dependencies_layer] if has_requirements else [self.__common_dependencies_layer, self.__shared_backend_layer]
+            layers=[self.__common_dependencies_layer ,self.__shared_backend_layer ,dependencies_layer] if has_requirements else [self.__common_dependencies_layer, self.__shared_backend_layer],
+            timeout=Duration.minutes(5)
         )
 
         self.__lambdas.append(function)
