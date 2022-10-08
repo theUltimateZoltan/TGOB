@@ -1,0 +1,4 @@
+mypy-boto3-dynamodb==1.24.74
+mypy_boto3_s3==1.24.76
+mypy_boto3_apigatewaymanagementapi==1.24.36.post1
+boto3==1.24.79
