@@ -10,10 +10,11 @@ def lambda_handler(event: dict, context: dict) -> dict:
         return {"statusCode": 404}
     
     if game_session.phase == Phase.Enrollment:
-        game_session.players_callback_urls.append(connectionId)
+        game_session.players_connection_ids.append(connectionId)
         GameData.write_session(game_session)
         ApiResponse.post_to_connection(connectionId ,game_session.to_response_object())
+        return {"statusCode": 200}
     else:
         ApiResponse.post_to_connection(connectionId ,{"message": "The session is not currently open to join."}, is_error=True)
         return {"statusCode": 400}
-    return {"statusCode": 200}
+    

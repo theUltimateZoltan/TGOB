@@ -80,8 +80,8 @@ class GameRound(SessionDataClass):
 class GameSession(SessionDataClass):
     session_id: str
     phase: Phase
-    coordinator_callback_url: str
-    players_callback_urls: List[str]
+    coordinator_connection_id: str
+    players_connection_ids: List[str]
     active_round: Union[GameRound, None]
     recent_rounds: List[GameRound]
 

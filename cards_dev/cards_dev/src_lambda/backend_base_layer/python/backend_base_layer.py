@@ -88,8 +88,8 @@ class GameData:
             return GameSession(
                 session_id=metadata_object.get("session_id"),
                 phase=Phase(metadata_object.get("phase")),
-                coordinator_callback_url=metadata_object.get("coordinator_callback_url"),
-                players_callback_urls=metadata_object.get("players_callback_urls"),
+                coordinator_connection_id=metadata_object.get("coordinator_connection_id"),
+                players_connection_ids=metadata_object.get("players_connection_ids"),
                 active_round=retrieved_round_objects[-1] if len(retrieved_round_objects) > 1 else None,
                 recent_rounds=retrieved_round_objects[1:-1] if len(retrieved_round_objects) > 2 else [],
             )
@@ -99,8 +99,8 @@ class GameData:
         initial_session: GameSession = GameSession(
             session_id=session_id, 
             phase=Phase.Enrollment,
-            coordinator_callback_url=None,
-            players_callback_urls=[],
+            coordinator_connection_id=None,
+            players_connection_ids=[],
             active_round=None,
             recent_rounds=[]
             )
