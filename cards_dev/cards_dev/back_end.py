@@ -70,6 +70,7 @@ class CardsBackend(Stack):
             web_socket_api=self.__websocket_api,
             auto_deploy=True,
         )
+        api.Deployment(self, "deployment_websocket_prod", api=self.__websocket_api)
 
         self.__setup_custom_websocket_domain()
         self.__setup_custom_rest_api_domain()

@@ -14,7 +14,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 class ApiResponse:
-    websocket_api_manager: ApiGatewayManagementApiClient = boto3.client('apigatewaymanagementapi')
+    websocket_api_manager: ApiGatewayManagementApiClient = boto3.client('apigatewaymanagementapi', endpoint_url="https://wsapi.devcards.eladlevy.click")
 
     @staticmethod
     def format_http_response(body: dict, status_code: int=200) -> dict:
