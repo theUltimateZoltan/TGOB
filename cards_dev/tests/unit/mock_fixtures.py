@@ -8,6 +8,8 @@ from mypy_boto3_dynamodb.service_resource import Table
 from mypy_boto3_s3.service_resource import Bucket
 from mypy_boto3_apigatewaymanagementapi import ApiGatewayManagementApiClient
 
+from models import GameSession, Phase
+
 
 @pytest.fixture
 def session_table() -> Table:
@@ -57,3 +59,9 @@ def post_to_connection() -> ApiGatewayManagementApiClient:
     ApiResponse.websocket_api_manager = MagicMock()
     ApiResponse.websocket_api_manager.post_to_connection = MagicMock()
     yield
+
+@pytest.fixture
+def dummy_session(session_table) -> GameSession:
+    arbitrary_game_session = GameSession("Existingid", Phase.InProgress, "", ["player1", "player2"], active_round=None, recent_rounds=[])
+    GameData.session_table.put_item(Item=arbitrary_game_session.to_dynamodb_object())
+    yield arbitrary_game_session
