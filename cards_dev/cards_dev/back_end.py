@@ -157,7 +157,7 @@ class CardsBackend(Stack):
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", path.join(lambda_source_path ,"requirements.txt"),
             "-t", installation_path],
             stdout=sys.stdout)
-        return packaging_path
+        return path.join(installation_path, "..")
 
     def __provision_backend_lambda_function(self, main_file_name: str, 
             handler_function: str="lambda_handler", runtime: lambda_.Runtime=lambda_.Runtime.PYTHON_3_9) -> lambda_.Function:
@@ -174,7 +174,7 @@ class CardsBackend(Stack):
             runtime=runtime,
             handler=f"{main_file_name}.{handler_function}",
             code=lambda_.Code.from_asset(function_path),
-            layers=[self.__common_dependencies_layer ,self.__shared_backend_layer ,dependencies_layer] if has_requirements else [self.__shared_backend_layer]
+            layers=[self.__common_dependencies_layer ,self.__shared_backend_layer ,dependencies_layer] if has_requirements else [self.__common_dependencies_layer, self.__shared_backend_layer]
         )
 
         self.__lambdas.append(function)
