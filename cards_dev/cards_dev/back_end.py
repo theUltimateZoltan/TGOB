@@ -70,7 +70,6 @@ class CardsBackend(Stack):
             web_socket_api=self.__websocket_api,
             auto_deploy=True,
         )
-        api.Deployment(self, "deployment_websocket_prod", api=self.__websocket_api)
 
         self.__setup_custom_websocket_domain()
         self.__setup_custom_rest_api_domain()
@@ -139,6 +138,7 @@ class CardsBackend(Stack):
         self.__add_rest_resource_method("session", _HttpMethod.POST, self.__provision_backend_lambda_function("create_new_session"))
         self.__add_websocket_route_method("$connect", self.__provision_backend_lambda_function("new_connection"))
         self.__add_websocket_route_method("join", self.__provision_backend_lambda_function("join_session"))
+        
 
     def __add_rest_resource_method(self, path: str, method: _HttpMethod, proxy_function: lambda_.Function) -> None:
         assert path in self.__rest_resources, "First create the resource, then add a method to it."
@@ -151,6 +151,7 @@ class CardsBackend(Stack):
             integration=apiv2_integrations.WebSocketLambdaIntegration(f"websocket_{path}_proxy_integration", proxy_function),
            # authorizer=self.__cognito_authorizer TODO add on connect only
             )
+        
 
     def __package_dependencies(self, lambda_source_path: str, custom_packaging_path: path=None) -> str:
         packaging_path = custom_packaging_path or path.join(lambda_source_path, "dependencies")
