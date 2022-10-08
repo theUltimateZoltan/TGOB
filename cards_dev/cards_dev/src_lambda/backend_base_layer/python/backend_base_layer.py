@@ -4,25 +4,45 @@ import json
 from typing import List, Union
 from mypy_boto3_dynamodb.service_resource import Table
 from mypy_boto3_s3.service_resource import Bucket
+from mypy_boto3_apigatewaymanagementapi import ApiGatewayManagementApiClient
 from models import GameRound, GameSession, Phase, QuestionCard
 import boto3
 from boto3.dynamodb.conditions import Key
 
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+class ApiResponse:
+    websocket_api_manager: ApiGatewayManagementApiClient = boto3.client('apigatewaymanagementapi')
 
-def http_response(body: dict, status_code: int=200) -> dict:
-    return {
-            "isBase64Encoded": False,
-            "statusCode": status_code,
-            "body": json.dumps(body),
-            "headers": {
-                "Access-Control-Allow-Headers": 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-                "Access-Control-Allow-Methods": 'OPTIONS,POST,GET',
-                "Access-Control-Allow-Origin": 'https://devcards.eladlevy.click'
+    @staticmethod
+    def format_http_response(body: dict, status_code: int=200) -> dict:
+        return {
+                "isBase64Encoded": False,
+                "statusCode": status_code,
+                "body": body,
+                "headers": {
+                    "Access-Control-Allow-Headers": 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                    "Access-Control-Allow-Methods": 'OPTIONS,POST,GET',
+                    "Access-Control-Allow-Origin": 'https://devcards.eladlevy.click'
+                }
             }
+
+    @staticmethod
+    def _format_websocket_callback_content(body: dict, successful=True) -> dict:
+        return {
+            "success": successful,
+            "body": body
         }
+
+    @staticmethod
+    def post_to_connection(connection_id: str, body: dict, is_error: bool=True) -> None:
+        if is_error and "message" not in body.keys():
+            body["message"] = "An error occured."
+        data: dict = ApiResponse._format_websocket_callback_content(body, successful=not is_error)
+        encoded_data = json.dumps(data).encode("utf-8")
+        ApiResponse.websocket_api_manager.post_to_connection(ConnectionId=connection_id ,Data=encoded_data)
 
 
 class GameData:
@@ -61,7 +81,6 @@ class GameData:
             ConsistentRead=True
         )
 
-
         if query_result.get("Count"):
             retrieved_round_objects: list = query_result.get("Items", None)
             retrieved_round_objects.sort(key=lambda round_obj: round_obj.get("round"))
@@ -70,7 +89,7 @@ class GameData:
                 session_id=metadata_object.get("session_id"),
                 phase=Phase(metadata_object.get("phase")),
                 coordinator_callback_url=metadata_object.get("coordinator_callback_url"),
-                players_callback_urls=metadata_object.get("players_ids"),
+                players_callback_urls=metadata_object.get("players_callback_urls"),
                 active_round=retrieved_round_objects[-1] if len(retrieved_round_objects) > 1 else None,
                 recent_rounds=retrieved_round_objects[1:-1] if len(retrieved_round_objects) > 2 else [],
             )
@@ -85,7 +104,7 @@ class GameData:
             active_round=None,
             recent_rounds=[]
             )
-        GameData.session_table.put_item(Item=initial_session.to_dynamodb_object())
+        GameData.write_session(initial_session)
         return initial_session
 
     @staticmethod
@@ -126,3 +145,7 @@ class GameData:
                         "round": r.round
                     }
                 )
+
+    @staticmethod
+    def write_session(session: GameSession) -> None:
+        GameData.session_table.put_item(Item=session.to_dynamodb_object())

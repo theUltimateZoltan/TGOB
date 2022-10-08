@@ -1,12 +1,19 @@
-from backend_base_layer import http_response
-from models import GameSession
-import boto3
-from mypy_boto3_dynamodb.service_resource import Table
-import json
+from models import GameSession, Phase
+from backend_base_layer import GameData, ApiResponse
 
-dynamodb = boto3.resource('dynamodb')
-session_table = dynamodb.Table("dev_session_data")
-
-def lambda_handler(event, context, session_table_mock: Table=None) -> str:
-    table: Table = session_table_mock if session_table_mock else session_table
-    raise NotImplementedError()
+def lambda_handler(event: dict, context: dict) -> dict:
+    session_to_join = event.get("body").get("session_id")
+    connectionId = event.get("requestContext").get("connectionId")
+    game_session: GameSession = GameData.get_session(session_id=session_to_join)
+    if not game_session:
+        ApiResponse.post_to_connection(connectionId ,{"message": "Session id not found."}, is_error=True)
+        return {"statusCode": 404}
+    
+    if game_session.phase == Phase.Enrollment:
+        game_session.players_callback_urls.append(connectionId)
+        GameData.write_session(game_session)
+        ApiResponse.post_to_connection(connectionId ,game_session.to_response_object())
+    else:
+        ApiResponse.post_to_connection(connectionId ,{"message": "The session is not currently open to join."}, is_error=True)
+        return {"statusCode": 400}
+    return {"statusCode": 200}

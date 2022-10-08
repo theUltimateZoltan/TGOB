@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from dataclasses import dataclass, asdict
 from enum import Enum
-from typing import Iterable, List, Union
+from typing import Iterable, List, Set, Union
 
 
 class Phase(Enum):
@@ -66,7 +66,7 @@ class GameRound(SessionDataClass):
     round: int
     winner_id: Union[str,  None]
     question_card_text: str
-    answer_cards_suggested: Iterable[str]
+    answer_cards_suggested: List[str]
     winning_answer_index: int=0
 
     def to_dynamodb_object(self) -> dict:
@@ -81,7 +81,7 @@ class GameSession(SessionDataClass):
     session_id: str
     phase: Phase
     coordinator_callback_url: str
-    players_callback_urls: Iterable[str]
+    players_callback_urls: List[str]
     active_round: Union[GameRound, None]
     recent_rounds: List[GameRound]
 
