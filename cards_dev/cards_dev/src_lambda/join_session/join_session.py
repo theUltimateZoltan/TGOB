@@ -2,7 +2,7 @@ from models import GameSession, Phase
 from backend_base_layer import GameData, ApiResponse
 
 def lambda_handler(event: dict, context: dict) -> dict:
-    session_to_join = event.get("body").get("session_id")
+    session_to_join = event.get("message").get("session_id")
     connectionId = event.get("requestContext").get("connectionId")
     game_session: GameSession = GameData.get_session(session_id=session_to_join)
     if not game_session:
