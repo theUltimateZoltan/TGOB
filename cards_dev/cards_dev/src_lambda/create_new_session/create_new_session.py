@@ -1,4 +1,4 @@
-from backend_base_layer import http_response, GameData
+from backend_base_layer import ApiResponse, GameData
 from models import GameSession
 import wonderwords
 
@@ -20,4 +20,4 @@ def __generate_new_session_id() -> str:
 def lambda_handler(event: dict, context: dict) -> str:
     new_session_id: str = __generate_new_session_id()
     new_session: GameSession = GameData.create_new_session(new_session_id)
-    return http_response(new_session.to_response_object())
+    return ApiResponse.format_http_response(new_session.to_response_object())
