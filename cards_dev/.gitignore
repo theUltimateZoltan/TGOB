@@ -9,3 +9,4 @@ Pipfile*
 .cdk.staging
 cdk.out
 dependencies
+common_dependencies_layer

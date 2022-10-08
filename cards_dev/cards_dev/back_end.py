@@ -77,19 +77,26 @@ class CardsBackend(Stack):
             authorizer_name="user_pool_rest_api_authorizer",
             cognito_user_pools=[self.__user_data_stack.user_pool]
         )
+        
+        common_dependencies = self.__package_dependencies(layer_path:=path.join(self.__lambda_src_path, "backend_base_layer"),
+            custom_packaging_path=path.join(self.__lambda_src_path, "common_dependencies_layer")
+        )
+        self.__common_dependencies_layer =  lambda_.LayerVersion(self, f"common_dependencies",
+                removal_policy=RemovalPolicy.DESTROY,
+                code=lambda_.Code.from_asset(common_dependencies),
+                compatible_runtimes=[lambda_.Runtime.PYTHON_3_9]
+            )
 
     def __setup_custom_websocket_domain(self, prod_stage: apiv2.WebSocketStage) -> None:
         domainName = apiv2.DomainName(self, 'websocket_api_domain_name', 
             certificate=self.__api_tls_certificate,
             domain_name=self.__endpoints_stack.websocket_api_domain,
         )
-
         apiMapping = apiv2.ApiMapping(self, 'websocket_api_alias_mapping', 
             api=self.__websocket_api,
             domain_name=domainName,
             stage=prod_stage
         )
-
         apiMapping.node.add_dependency(domainName)
 
         route53.ARecord(self, 'websocket_api_alias', 
@@ -143,12 +150,14 @@ class CardsBackend(Stack):
            # authorizer=self.__cognito_authorizer TODO add on connect only
             )
 
-    def __package_dependencies(self, lambda_source_path: str) -> str:
-        rmtree(installation_path:=path.join(lambda_source_path, "dependencies", "python"))
+    def __package_dependencies(self, lambda_source_path: str, custom_packaging_path: path=None) -> str:
+        packaging_path = custom_packaging_path or path.join(lambda_source_path, "dependencies")
+        rmtree(packaging_path)
+        os.makedirs(installation_path:=path.join(packaging_path, "python"))
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", path.join(lambda_source_path ,"requirements.txt"),
             "-t", installation_path],
             stdout=sys.stdout)
-        return path.join(lambda_source_path, "dependencies")
+        return packaging_path
 
     def __provision_backend_lambda_function(self, main_file_name: str, 
             handler_function: str="lambda_handler", runtime: lambda_.Runtime=lambda_.Runtime.PYTHON_3_9) -> lambda_.Function:
@@ -165,7 +174,7 @@ class CardsBackend(Stack):
             runtime=runtime,
             handler=f"{main_file_name}.{handler_function}",
             code=lambda_.Code.from_asset(function_path),
-            layers=[self.__shared_backend_layer, dependencies_layer] if has_requirements else [self.__shared_backend_layer]
+            layers=[self.__common_dependencies_layer ,self.__shared_backend_layer ,dependencies_layer] if has_requirements else [self.__shared_backend_layer]
         )
 
         self.__lambdas.append(function)
