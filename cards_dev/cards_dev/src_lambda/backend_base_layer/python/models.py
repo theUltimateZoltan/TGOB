@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from dataclasses import dataclass, asdict
 from enum import Enum
 from typing import Iterable, List, Union
@@ -9,15 +10,21 @@ class Phase(Enum):
         Complete="complete"
 
 class SessionDataClass:
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-    def to_dynamodb_object(self, fluff_attributes: List[str], extra_attributes: dict) -> dict:
-        object_dict: dict = self.to_dict()
+    def to_dict(self, fluff_attributes: List[str], extra_attributes: dict) -> dict:
+        object_dict: dict = asdict(self)
         for attr in fluff_attributes:
             object_dict.pop(attr)
         object_dict.update(extra_attributes)
         return object_dict
+
+    @abstractmethod
+    def to_dynamodb_object(self, fluff_attributes: List[str], extra_attributes: dict) -> dict:
+        return self.to_dict(fluff_attributes, extra_attributes)
+
+    @abstractmethod
+    def to_response_object(self, fluff_attributes: List[str], extra_attributes: dict) -> dict:
+        return self.to_dict(fluff_attributes, extra_attributes)
+
 
 
 @dataclass
@@ -80,3 +87,6 @@ class GameSession(SessionDataClass):
 
     def to_dynamodb_object(self) -> dict:
          return super().to_dynamodb_object(["active_round", "recent_rounds", "phase"], {"round": 0, "phase": self.phase.value})
+
+    def to_response_object(self) -> dict:
+        return super().to_response_object(["active_round", "recent_rounds", "phase"], {"round": 0, "phase": self.phase.value})
