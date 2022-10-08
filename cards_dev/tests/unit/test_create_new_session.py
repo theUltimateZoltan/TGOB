@@ -4,7 +4,7 @@ from cards_dev.src_lambda.backend_base_layer.python.models import GameSession, P
 from mypy_boto3_dynamodb.service_resource import Table
 import pytest
 from backend_base_layer import GameData
-from .mock_fixtures import session_table, dummy_session
+from .mock_fixtures import *
 
 
 def test_generated_id_unique(session_table: Table, dummy_session: GameSession):
@@ -18,7 +18,6 @@ def test_generated_id_unique(session_table: Table, dummy_session: GameSession):
             [""] * (number_of_words_in_sequence-1)
         )
 
-        
         create_new_session.lambda_handler({}, {})
 
         assert GameData.get_session(dummy_session.session_id)
