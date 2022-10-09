@@ -36,7 +36,7 @@ export class GameSetupComponent implements OnInit {
 
   async create_session() : Promise<string> {
     const auth_token: string = this.api_access_token!
-    const response = await fetch(`${environment.backend_api_url}/session/`, {method: 'POST', body: JSON.stringify({"creator_id": this.user!.email}),
+    const response = await fetch(`${environment.rest_api_url}/session/`, {method: 'POST', body: JSON.stringify({"creator_id": this.user!.email}),
       headers: {'Authorization': auth_token}
     });
     return await response.json();

@@ -88,11 +88,6 @@ class CardsBackend(Stack):
                 code=lambda_.Code.from_asset(common_dependencies),
                 compatible_runtimes=[lambda_.Runtime.PYTHON_3_9]
             )
-        
-        self.__backend_function_role = iam.Role(self, "backend_lambda_role",
-            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
-            managed_policies=[iam.ManagedPolicy.from_aws_managed_policy_name("AmazonAPIGatewayInvokeFullAccess")]
-        )
 
     def __setup_custom_websocket_domain(self) -> None:
         domainName = apiv2.DomainName(self, 'websocket_api_domain_name', 
@@ -186,8 +181,9 @@ class CardsBackend(Stack):
             code=lambda_.Code.from_asset(function_path),
             layers=[self.__common_dependencies_layer ,self.__shared_backend_layer ,dependencies_layer] if has_requirements else [self.__common_dependencies_layer, self.__shared_backend_layer],
             timeout=Duration.minutes(5),
-            role=self.__backend_function_role
         )
+        
+        function.role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("AmazonAPIGatewayInvokeFullAccess"))
 
         self.__lambdas.append(function)
 

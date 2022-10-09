@@ -37,7 +37,7 @@ class ApiResponse:
         }
 
     @staticmethod
-    def post_to_connection(connection_id: str, body: dict, is_error: bool=True) -> None:
+    def post_to_connection(connection_id: str, body: dict, is_error: bool=False) -> None:
         if is_error and "message" not in body.keys():
             body["message"] = "An error occured."
         data: dict = ApiResponse._format_websocket_callback_content(body, successful=not is_error)
