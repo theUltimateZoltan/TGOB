@@ -16,6 +16,7 @@ from aws_cdk import (
     aws_certificatemanager as acm,
     aws_route53 as route53,
     aws_route53_targets as targets,
+    aws_iam as iam,
     RemovalPolicy
 )
 from constructs import Construct
@@ -87,6 +88,11 @@ class CardsBackend(Stack):
                 code=lambda_.Code.from_asset(common_dependencies),
                 compatible_runtimes=[lambda_.Runtime.PYTHON_3_9]
             )
+        
+        self.__backend_function_role = iam.Role(self, "backend_lambda_role",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            managed_policies=[iam.ManagedPolicy.from_aws_managed_policy_name("AmazonAPIGatewayInvokeFullAccess")]
+        )
 
     def __setup_custom_websocket_domain(self) -> None:
         domainName = apiv2.DomainName(self, 'websocket_api_domain_name', 
@@ -138,7 +144,7 @@ class CardsBackend(Stack):
         self.__add_rest_resource_method("session", _HttpMethod.POST, self.__provision_backend_lambda_function("create_new_session"))
         self.__add_websocket_route_method("$connect", self.__provision_backend_lambda_function("new_connection"))
         self.__add_websocket_route_method("join", self.__provision_backend_lambda_function("join_session"))
-        
+
 
     def __add_rest_resource_method(self, path: str, method: _HttpMethod, proxy_function: lambda_.Function) -> None:
         assert path in self.__rest_resources, "First create the resource, then add a method to it."
@@ -173,12 +179,14 @@ class CardsBackend(Stack):
                 compatible_runtimes=[lambda_.Runtime.PYTHON_3_9]
             )
 
+
         function = lambda_.Function(self, f"{main_file_name}_lambda",
             runtime=runtime,
             handler=f"{main_file_name}.{handler_function}",
             code=lambda_.Code.from_asset(function_path),
             layers=[self.__common_dependencies_layer ,self.__shared_backend_layer ,dependencies_layer] if has_requirements else [self.__common_dependencies_layer, self.__shared_backend_layer],
-            timeout=Duration.minutes(5)
+            timeout=Duration.minutes(5),
+            role=self.__backend_function_role
         )
 
         self.__lambdas.append(function)
