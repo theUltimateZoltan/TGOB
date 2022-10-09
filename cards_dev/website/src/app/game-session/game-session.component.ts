@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { GameSession } from '../models/game-session';
 
 @Component({
   selector: 'app-game-session',
@@ -7,7 +8,7 @@ import { Component, Input, OnInit } from '@angular/core';
 })
 export class GameSessionComponent implements OnInit {
 
-  @Input() session_guid: string = "";
+  @Input() session: GameSession | undefined;
   
   @Input()
   api_access_token: string | undefined
