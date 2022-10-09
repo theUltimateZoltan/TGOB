@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { environment } from 'src/environments/environment';
+import { GameSession } from '../models/game-session';
 
 @Component({
   selector: 'app-user',

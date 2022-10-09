@@ -6,8 +6,8 @@
     <span float="right"><app-user (api_access_jwt)="onLogin($event)" [user_name]="getLoggedInUser()?.name"></app-user></span>
     <div class="row">
     <div class="col">
-      <app-game-setup *ngIf="!session_guid && getLoggedInUser()" [api_access_token]="getApiAccessToken()" [user]="getLoggedInUser()"></app-game-setup>
-      <app-game-session *ngIf="session_guid && getLoggedInUser()" [session_guid]="session_guid"  [api_access_token]="getApiAccessToken()"></app-game-session>
+      <app-game-setup *ngIf="!this.session && getLoggedInUser()" [api_access_token]="getApiAccessToken()" [user]="getLoggedInUser()" (connection_request)="on_connection_requested($event)"></app-game-setup>
+      <app-game-session *ngIf="this.session && getLoggedInUser()" [session]="this.session"  [api_access_token]="getApiAccessToken()"></app-game-session>
     </div>
   </div>
 </div>

@@ -5,6 +5,7 @@ import { QuestionCard } from "./question-card"
 import { Round } from "./round"
 
 export class GameSession {
+    connection_request: string
     players: Array<Player>
     phase: Phase
     joinCode: string
@@ -18,5 +19,6 @@ export class GameSession {
         this.joinCode = json_object.session_id
         this.round = null
         this.complete = false
+        this.connection_request = json_object.connection_request
     }
 }
