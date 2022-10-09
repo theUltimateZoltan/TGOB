@@ -21,7 +21,7 @@ class ApiResponse:
         return {
                 "isBase64Encoded": False,
                 "statusCode": status_code,
-                "body": body,
+                "body": json.dumps(body),
                 "headers": {
                     "Access-Control-Allow-Headers": 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                     "Access-Control-Allow-Methods": 'OPTIONS,POST,GET',
@@ -33,7 +33,7 @@ class ApiResponse:
     def _format_websocket_callback_content(body: dict, successful=True) -> dict:
         return {
             "success": successful,
-            "body": body
+            "body": json.dumps(body)
         }
 
     @staticmethod

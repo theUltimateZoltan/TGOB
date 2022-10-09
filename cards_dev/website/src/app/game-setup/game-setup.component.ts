@@ -5,6 +5,7 @@ import { Player } from '../models/player';
 import { AWSError, CognitoIdentityCredentials, Endpoint, SNS } from 'aws-sdk';
 import { config } from 'aws-sdk/index';
 import { PromiseResult } from 'aws-sdk/lib/request';
+import { WebsocketBuilder } from 'websocket-ts/lib';
 
 @Component({
   selector: 'app-game-setup',
@@ -31,6 +32,13 @@ export class GameSetupComponent implements OnInit {
   on_create(): void {
     console.log(this.create_session())
     // connect to game via websocket api
+    const ws = new WebsocketBuilder(environment.websocket_api_url)
+      .onOpen((i, ev) => { console.log("Success connecting to game api.") })
+      .onClose((i, ev) => { console.log("Disconnected from game api.") })
+      .onError((i, ev) => { console.log("Game api connection error.") })
+      .onMessage((i, ev) => { console.log("message") })
+      .onRetry((i, ev) => { console.log("Connection retry...") })
+      .build();
     // display coordinator graphics
   }
 
