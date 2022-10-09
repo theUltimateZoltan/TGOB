@@ -13,7 +13,7 @@ from boto3.dynamodb.conditions import Key
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-class ApiResponse:
+class ApiRelay:
     websocket_api_manager: ApiGatewayManagementApiClient = boto3.client('apigatewaymanagementapi', endpoint_url="https://wsapi.devcards.eladlevy.click")
 
     @staticmethod
@@ -40,10 +40,13 @@ class ApiResponse:
     def post_to_connection(connection_id: str, body: dict, is_error: bool=False) -> None:
         if is_error and "message" not in body.keys():
             body["message"] = "An error occured."
-        data: dict = ApiResponse._format_websocket_callback_content(body, successful=not is_error)
+        data: dict = ApiRelay._format_websocket_callback_content(body, successful=not is_error)
         encoded_data = json.dumps(data).encode("utf-8")
-        ApiResponse.websocket_api_manager.post_to_connection(ConnectionId=connection_id ,Data=encoded_data)
+        ApiRelay.websocket_api_manager.post_to_connection(ConnectionId=connection_id ,Data=encoded_data)
 
+    @staticmethod
+    def get_event_body(event: dict) -> dict:
+        return json.loads(event.get("body"))
 
 class GameData:
 ##
@@ -89,7 +92,7 @@ class GameData:
                 session_id=metadata_object.get("session_id"),
                 phase=Phase(metadata_object.get("phase")),
                 coordinator_connection_id=metadata_object.get("coordinator_connection_id"),
-                players_connection_ids=metadata_object.get("players_connection_ids"),
+                players=metadata_object.get("players"),
                 active_round=retrieved_round_objects[-1] if len(retrieved_round_objects) > 1 else None,
                 recent_rounds=retrieved_round_objects[1:-1] if len(retrieved_round_objects) > 2 else [],
             )
@@ -100,7 +103,7 @@ class GameData:
             session_id=session_id, 
             phase=Phase.Enrollment,
             coordinator_connection_id=None,
-            players_connection_ids=[],
+            players=[],
             active_round=None,
             recent_rounds=[]
             )

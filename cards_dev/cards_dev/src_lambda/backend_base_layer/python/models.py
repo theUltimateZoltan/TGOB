@@ -53,7 +53,7 @@ class QuestionCard:
 @dataclass
 class Player(SessionDataClass):
     name: str
-    callback_url: str
+    connection_id: str
 
 
 ##
@@ -81,12 +81,14 @@ class GameSession(SessionDataClass):
     session_id: str
     phase: Phase
     coordinator_connection_id: str
-    players_connection_ids: List[str]
+    players: List[Player]
     active_round: Union[GameRound, None]
     recent_rounds: List[GameRound]
 
     def to_dynamodb_object(self) -> dict:
-         return super().to_dynamodb_object(["active_round", "recent_rounds", "phase"], {"round": 0, "phase": self.phase.value})
+         return super().to_dynamodb_object(["active_round", "recent_rounds", "phase"], 
+         {"round": 0, "phase": self.phase.value})
 
     def to_response_object(self) -> dict:
-        return super().to_response_object(["active_round", "recent_rounds", "phase"], {"round": 0, "phase": self.phase.value})
+        return super().to_response_object(["active_round", "recent_rounds", "phase", "players"], 
+        {"phase": self.phase.value, "players": [p.name for p in self.players]})
