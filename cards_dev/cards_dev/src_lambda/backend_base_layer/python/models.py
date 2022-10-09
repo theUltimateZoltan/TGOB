@@ -52,8 +52,11 @@ class QuestionCard:
 
 @dataclass
 class Player(SessionDataClass):
-    name: str
+    identity_token: str
     connection_id: str
+
+    def to_dynamodb_object(self) -> dict:
+         return super().to_dynamodb_object([], {})
 
 
 ##
@@ -91,4 +94,4 @@ class GameSession(SessionDataClass):
 
     def to_response_object(self) -> dict:
         return super().to_response_object(["active_round", "recent_rounds", "phase", "players"], 
-        {"phase": self.phase.value, "players": [p.name for p in self.players]})
+        {"phase": self.phase.value, "players": [p.to_dynamodb_object() for p in self.players]})
