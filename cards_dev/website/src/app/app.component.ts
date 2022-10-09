@@ -27,7 +27,7 @@ export class AppComponent {
     let id_token: string = this.getApiAccessToken()
     if (id_token) {
       let user_details: any = jwt_decode(id_token)
-      return new Player(user_details.email, user_details.name)
+      return new Player(user_details.email, user_details.name, id_token)
     }
     return undefined
   }

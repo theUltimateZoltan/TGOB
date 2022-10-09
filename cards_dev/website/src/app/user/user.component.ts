@@ -1,7 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { CognitoIdentityCredentials, Config } from 'aws-sdk';
-import { config } from 'aws-sdk/index';
 
 @Component({
   selector: 'app-user',
