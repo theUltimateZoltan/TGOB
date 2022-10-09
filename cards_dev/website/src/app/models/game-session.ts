@@ -1,3 +1,4 @@
+import { json } from "stream/consumers"
 import { Phase } from "./phase"
 import { Player } from "./player"
 import { QuestionCard } from "./question-card"
@@ -7,33 +8,15 @@ export class GameSession {
     players: Array<Player>
     phase: Phase
     joinCode: string
-    round: Round
+    round: Round | null
     complete: boolean
 
-    constructor(session_id: string){
-        // access api gw
-
-        this.players = []
-        this.phase = Phase.enrollment
-        this.joinCode = this.generateJoinCode()
-        this.round = this.generateRound()
+    constructor(json_object: any){
+        console.log(json_object.toString())
+        this.players = json_object.players
+        this.phase = json_object.phase
+        this.joinCode = json_object.session_id
+        this.round = null
         this.complete = false
     }
-
-    private generateJoinCode(): string {
-        return "samplejoincode"
-    }
-
-    private generateRound(): Round{
-        var questionCard: QuestionCard = new QuestionCard("sample")
-        var arbiter: Player | undefined = this.players.at(0)
-
-        if (arbiter != undefined){
-            return new Round(questionCard, arbiter)
-        }else{
-            throw new Error("This is somehow a game with no Players.")
-        }
-    }
-
-    
 }

@@ -1,7 +1,7 @@
 import pytest
 from moto import mock_dynamodb, mock_s3
 from requests import patch
-from backend_base_layer import GameData, ApiResponse
+from backend_base_layer import GameData, ApiRelay
 from unittest.mock import MagicMock
 import boto3
 from mypy_boto3_dynamodb.service_resource import Table
@@ -56,8 +56,8 @@ def session_archive() -> Bucket:
 
 @pytest.fixture
 def post_to_connection() -> ApiGatewayManagementApiClient:
-    ApiResponse.websocket_api_manager = MagicMock()
-    ApiResponse.websocket_api_manager.post_to_connection = MagicMock()
+    ApiRelay.websocket_api_manager = MagicMock()
+    ApiRelay.websocket_api_manager.post_to_connection = MagicMock()
     yield
 
 @pytest.fixture
