@@ -1,4 +1,4 @@
-from backend_base_layer import ApiRelay, GameData
+from backend_base_layer import ApiRelay, GameData, logger
 from models import GameSession
 import wonderwords
 

@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { environment } from 'src/environments/environment';
+import { GameSession } from 'src/app/models/game-session';
 import { QuestionCard } from "../../models/question-card";
 
 @Component({
@@ -9,7 +9,7 @@ import { QuestionCard } from "../../models/question-card";
 })
 export class CoordinatorComponent implements OnInit {
 
-  @Input() session_guid: string = "";
+  @Input() session: GameSession | undefined
 
   constructor() { }
 

@@ -11,13 +11,14 @@ from boto3.dynamodb.conditions import Key
 
 
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 class ApiRelay:
     websocket_api_manager: ApiGatewayManagementApiClient = boto3.client('apigatewaymanagementapi', endpoint_url="https://wsapi.devcards.eladlevy.click")
 
     @staticmethod
     def format_http_response(body: dict, status_code: int=200) -> dict:
+        logger.debug(f"Formatting http response for return value: {body}")
         return {
                 "isBase64Encoded": False,
                 "statusCode": status_code,
@@ -38,6 +39,7 @@ class ApiRelay:
 
     @staticmethod
     def post_to_connection(connection_id: str, body: dict, is_error: bool=False) -> None:
+        logger.debug(f"websocket callback with return value: {body} {'marked as ERROR.' if is_error else ''}")
         if is_error and "message" not in body.keys():
             body["message"] = "An error occured."
         data: dict = ApiRelay._format_websocket_callback_content(body, successful=not is_error)

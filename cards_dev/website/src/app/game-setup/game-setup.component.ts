@@ -2,8 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import fetch from 'node-fetch';
 import { environment } from 'src/environments/environment';
 import { Player } from '../models/player';
-import { WebsocketBuilder, Websocket } from 'websocket-ts/lib';
-import { GameSession } from '../models/game-session';
+import { Websocket } from 'websocket-ts/lib';
 
 @Component({
   selector: 'app-game-setup',
@@ -42,9 +41,10 @@ export class GameSetupComponent implements OnInit {
 
   async create_session() : Promise<string> {
     const auth_token: string = this.api_access_token!
-    const response: any = await fetch(`${environment.rest_api_url}/session/`, {method: 'POST',
+    const response_promise: any = await fetch(`${environment.rest_api_url}/session/`, {method: 'POST',
       headers: {'Authorization': auth_token}
     });
+    let response = await response_promise.json()
     return response.session_id
   }
 
