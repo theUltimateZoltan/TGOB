@@ -5,7 +5,7 @@ from typing import List, Union
 from mypy_boto3_dynamodb.service_resource import Table
 from mypy_boto3_s3.service_resource import Bucket
 from mypy_boto3_apigatewaymanagementapi import ApiGatewayManagementApiClient
-from models import GameRound, GameSession, Phase, QuestionCard
+from models import GameRound, GameSession, Phase, Player, QuestionCard
 import boto3
 from boto3.dynamodb.conditions import Key
 
@@ -94,7 +94,7 @@ class GameData:
                 session_id=metadata_object.get("session_id"),
                 phase=Phase(metadata_object.get("phase")),
                 coordinator_connection_id=metadata_object.get("coordinator_connection_id"),
-                players=metadata_object.get("players"),
+                players=[Player.from_dynamodb_object(p) for p in metadata_object.get("players")],
                 active_round=retrieved_round_objects[-1] if len(retrieved_round_objects) > 1 else None,
                 recent_rounds=retrieved_round_objects[1:-1] if len(retrieved_round_objects) > 2 else [],
             )

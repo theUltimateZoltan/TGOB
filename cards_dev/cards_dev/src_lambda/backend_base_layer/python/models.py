@@ -1,7 +1,8 @@
+from __future__ import annotations
 from abc import abstractmethod
 from dataclasses import dataclass, asdict
 from enum import Enum
-from typing import Iterable, List, Set, Union
+from typing import List, Union
 
 
 class Phase(Enum):
@@ -56,7 +57,11 @@ class Player(SessionDataClass):
     connection_id: str
 
     def to_dynamodb_object(self) -> dict:
-         return super().to_dynamodb_object([], {})
+        return super().to_dynamodb_object([], {})
+
+    @staticmethod
+    def from_dynamodb_object(dynamodb_obj: dict) -> Player:
+        return Player(dynamodb_obj.get("identity_token"), dynamodb_obj.get("connection_id"))
 
 
 ##
