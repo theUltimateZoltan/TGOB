@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { Session } from 'inspector';
 import jwt_decode from 'jwt-decode';
 import { environment } from 'src/environments/environment';
 import { Websocket, WebsocketBuilder } from 'websocket-ts/lib';
@@ -32,8 +31,8 @@ export class AppComponent {
       .onClose((i, ev) => { console.log("Disconnected from game api.") })
       .onError((i, ev) => { console.log("Game api connection error.") })
       .onMessage((i, ev) => { 
-        console.log(ev.data) 
-        this.session = new GameSession(ev.data)
+        const response_object: any = JSON.parse(ev.data)
+        this.session = new GameSession(JSON.parse(response_object.body))
       })
       .onRetry((i, ev) => { console.log("Connection retry...") })
       .build();
@@ -45,17 +44,17 @@ export class AppComponent {
     console.log(`Join request sent.`)
   }
 
-  onLogin(token: Map<string, string>) {
+  on_login(token: Map<string, string>) {
     this.api_access_jwt = token
     window.localStorage.setItem("api_token", this.api_access_jwt.get("id_token") ?? "")
   }
 
-  getApiAccessToken(): string {
+  get_api_access_token(): string {
     return window.localStorage.getItem("api_token") ?? ""
   }
 
-  getLoggedInUser(): Player | undefined {
-    let id_token: string = this.getApiAccessToken()
+  get_logged_in_user(): Player | undefined {
+    let id_token: string = this.get_api_access_token()
     if (id_token) {
       let user_details: any = jwt_decode(id_token)
       return new Player(user_details.email, user_details.name, id_token)

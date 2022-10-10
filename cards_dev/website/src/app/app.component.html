@@ -3,11 +3,11 @@
     <div class="col">
       <h1 class="display-3">Header</h1>
     </div>
-    <span float="right"><app-user (api_access_jwt)="onLogin($event)" [user_name]="getLoggedInUser()?.name"></app-user></span>
+    <span float="right"><app-user (api_access_jwt)="on_login($event)" [user_name]="get_logged_in_user()?.name"></app-user></span>
     <div class="row">
     <div class="col">
-      <app-game-setup *ngIf="!this.session && getLoggedInUser()" [api_access_token]="getApiAccessToken()" [user]="getLoggedInUser()" (connection_request)="on_connection_requested($event)"></app-game-setup>
-      <app-game-session *ngIf="this.session && getLoggedInUser()" [session]="this.session"  [api_access_token]="getApiAccessToken()"></app-game-session>
+      <app-game-setup *ngIf="!this.session && get_logged_in_user()" [api_access_token]="get_api_access_token()" [user]="get_logged_in_user()" (connection_request)="on_connection_requested($event)"></app-game-setup>
+      <app-game-session *ngIf="this.session && get_logged_in_user()" [session]="this.session"  [api_access_token]="get_api_access_token()"></app-game-session>
     </div>
   </div>
 </div>
