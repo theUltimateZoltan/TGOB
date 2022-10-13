@@ -35,19 +35,19 @@ export class AppComponent {
         const response_object: any = JSON.parse(ev.data)
         switch (response_object.directive) {
           case "update_session":
-            console.log(`Updating session from response: ${JSON.parse(response_object.body)}`)
+            console.log(`Updating session from response: ${response_object.body}`)
             this.session = new GameSession(JSON.parse(response_object.body))
             console.log(`session: ${JSON.stringify(this.session)}`)
             break;
           case "update_round":
-            console.log(`Updating round from response: ${JSON.parse(response_object.body)}`)
+            console.log(`Updating round from response: ${response_object.body}`)
             this.session!.round = new Round(JSON.parse(response_object.body))
             console.log(`round: ${JSON.stringify(this.session!.round)}`)
             break;
           case "update_enrollment":
-            console.log(`Updating session enrollment from response: ${JSON.parse(response_object.body)}`)
-            this.session!.players.push(new Player(JSON.parse(response_object.body.identity_token)))
-            console.log(`round: ${JSON.stringify(this.session!.round)}`)
+            console.log(`Updating session enrollment from response: ${response_object.body}`)
+            this.session!.players.push(new Player(JSON.parse(response_object.body).identity_token))
+            console.log(`session: ${JSON.stringify(this.session!)}`)
             break;
           case "show_error":
             console.log(`Error: ${JSON.parse(response_object.body.message)}`)

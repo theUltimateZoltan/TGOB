@@ -1,6 +1,7 @@
-import { Phase } from "./phase"
 import { Player } from "./player"
 import { Round } from "./round"
+
+type Phase = 'enrollment' | 'in_progress' | 'complete'
 
 export class GameSession {
     connection_request: string
