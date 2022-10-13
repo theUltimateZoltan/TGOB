@@ -46,7 +46,7 @@ def main() -> None:
 def upload_to_dynamodb(json_cards_list: List[dict]):
     dynamodb_client = boto3.client("dynamodb")
     
-    for i in range(0, (math.ceil(len(json_cards_list)/25)), 25):
+    for i in range(0, len(json_cards_list), 25):
         dynamodb_client.batch_write_item(RequestItems={
                 "dev_cards_data": [
                     {
@@ -54,17 +54,15 @@ def upload_to_dynamodb(json_cards_list: List[dict]):
                             "Item" : {
                                 "text": {"S": card.get("text")},
                                 "type": {"S": card.get("type")},
-                                "distributions": {"M": {
-                                    "uniform": {"N" : card.get("distributions").get("uniform")}
-                                    }
-                                }
+                                **{f"{dist}_distribution": {"N": value}  for dist, value in card.get("distributions").items()}
                             }
                         }
                     }
                     for card in json_cards_list[i: i+25]
                 ]
             }
-    )
+        )
+        print(f"Uploaded {i+25+1} objects.")
 
 if __name__ == "__main__":
     main()

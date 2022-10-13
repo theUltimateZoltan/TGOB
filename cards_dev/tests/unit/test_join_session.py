@@ -14,7 +14,6 @@ def test_simple_request(session_archive, post_to_connection, dummy_session: Game
     dummy_session.phase = Phase.Enrollment
     GameData.write_session(dummy_session)
     join_session.lambda_handler({"body": session_join_request(dummy_session.session_id), "requestContext": {"connectionId": mocked_connection_id}}, {})
-    assert ApiRelay.websocket_api_manager.post_to_connection.call_args.kwargs.get("ConnectionId") == mocked_connection_id
     connection_ids = [player.connection_id for player in GameData.get_session(dummy_session.session_id).players]
     assert mocked_connection_id in connection_ids
 

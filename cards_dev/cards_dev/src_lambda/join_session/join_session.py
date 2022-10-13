@@ -1,15 +1,16 @@
-from models import GameSession, Phase, Player
+from models import GameSession, Phase, Player, ResponseDirective
 from backend_base_layer import GameData, ApiRelay
 
 def __register_coordinator(game_session: GameSession, connection_id: str) -> None:
     game_session.coordinator_connection_id = connection_id
     GameData.write_session(game_session)
-    ApiRelay.post_to_connection(connection_id ,game_session.to_response_object())
+    ApiRelay.post_to_connection(connection_id ,game_session.to_response_object(), ResponseDirective.UpdateSession)
 
 def __enroll_player(game_session: GameSession, player: Player) -> None:
     game_session.players.append(player)
     GameData.write_session(game_session)
-    ApiRelay.post_to_connection(player.connection_id ,game_session.to_response_object())
+    ApiRelay.post_to_connection(player.connection_id ,game_session.to_response_object(), ResponseDirective.UpdateSession)
+    ApiRelay.post_to_connection(game_session.coordinator_connection_id ,player.to_response_object(), ResponseDirective.UpdateEnrollment)
 
 def __update_session_metadata(is_coordinator: bool, player_id_token: str, connection_id: str, game_session: GameSession) -> None:
     if game_session.phase == Phase.Enrollment:
@@ -18,7 +19,7 @@ def __update_session_metadata(is_coordinator: bool, player_id_token: str, connec
         else:
             __enroll_player(game_session, Player(player_id_token, connection_id))
     else:
-        ApiRelay.post_to_connection(connection_id ,{"message": "The session is not currently open to join."}, is_error=True)
+        ApiRelay.post_to_connection(connection_id ,{"message": "The session is not currently open to join."}, ResponseDirective.ShowError, is_error=True)
 
 def lambda_handler(event: dict, context: dict) -> dict:
     event_body = ApiRelay.get_event_body(event)
@@ -30,7 +31,7 @@ def lambda_handler(event: dict, context: dict) -> dict:
     if game_session:
         __update_session_metadata(is_coordinator, player_id_token, connection_id, game_session)
     else:
-         ApiRelay.post_to_connection(connection_id ,{"message": "Session id not found."}, is_error=True)
+         ApiRelay.post_to_connection(connection_id ,{"message": "Session id not found."}, ResponseDirective.ShowError ,is_error=True)
 
     return {"statusCode": 200}
 

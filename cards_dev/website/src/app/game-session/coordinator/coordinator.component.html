@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col">
-        
+        <div class="question_card" *ngIf="this.session!.round" [textContent]="this.session!.round.question_card.text"></div>
     </div>
 </div>
 <h5 style="position:fixed; left: 15px; bottom: 10px;">

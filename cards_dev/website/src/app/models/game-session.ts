@@ -9,6 +9,7 @@ export class GameSession {
     joinCode: string
     round: Round | null
     complete: boolean
+    is_coordinator: boolean
 
     constructor(json_object: any){
         this.players = json_object.players
@@ -17,6 +18,7 @@ export class GameSession {
         this.round = null
         this.complete = false
         this.connection_request = json_object.connection_request
+        this.is_coordinator = json_object.is_coordinator
         console.log(`Successfuly initialized game session: ${JSON.stringify(this)}`)
     }
 }

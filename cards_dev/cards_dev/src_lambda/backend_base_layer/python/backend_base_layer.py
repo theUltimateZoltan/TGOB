@@ -1,11 +1,13 @@
 from datetime import datetime
 import logging
 import json
+from math import dist
+from random import Random
 from typing import List, Union
 from mypy_boto3_dynamodb.service_resource import Table
 from mypy_boto3_s3.service_resource import Bucket
 from mypy_boto3_apigatewaymanagementapi import ApiGatewayManagementApiClient
-from models import GameRound, GameSession, Phase, Player, QuestionCard
+from models import AnswerCard, Distribution, GameRound, GameSession, Phase, Player, QuestionCard, ResponseDirective
 import boto3
 from boto3.dynamodb.conditions import Key
 
@@ -31,18 +33,19 @@ class ApiRelay:
             }
 
     @staticmethod
-    def _format_websocket_callback_content(body: dict, successful=True) -> dict:
+    def _format_websocket_callback_content(body: dict, directive: ResponseDirective, successful=True) -> dict:
         return {
+            "directive": directive.value,
             "success": successful,
             "body": json.dumps(body)
         }
 
     @staticmethod
-    def post_to_connection(connection_id: str, body: dict, is_error: bool=False) -> None:
+    def post_to_connection(connection_id: str, body: dict, directive: ResponseDirective,is_error: bool=False) -> None:
         logger.debug(f"websocket callback with return value: {body} {'marked as ERROR.' if is_error else ''}")
         if is_error and "message" not in body.keys():
             body["message"] = "An error occured."
-        data: dict = ApiRelay._format_websocket_callback_content(body, successful=not is_error)
+        data: dict = ApiRelay._format_websocket_callback_content(body, directive ,successful=not is_error)
         encoded_data = json.dumps(data).encode("utf-8")
         ApiRelay.websocket_api_manager.post_to_connection(ConnectionId=connection_id ,Data=encoded_data)
 
@@ -74,7 +77,7 @@ class GameData:
             session_id=round_db_object.get("session_id"),
             round=round_db_object.get("round"),
             winner_id=round_db_object.get("winner_id"),
-            question_card_text=round_db_object.get("question_card_text"),
+            question_card=QuestionCard.from_dynamodb_object(round_db_object.get("question_card")),
             answer_cards_suggested=round_db_object.get("answer_cards_suggested"),
             winning_answer_index=round_db_object.get("winning_answer_index"),
         ) if round_db_object else None
@@ -113,19 +116,42 @@ class GameData:
         return initial_session
 
     @staticmethod
+    def get_question_card(distribution: Distribution) -> QuestionCard:
+        response = GameData.cards_table.query(
+        Limit=1,
+        KeyConditionExpression={
+                Key(distribution.value).gt(str(Random().uniform(0, 1))) & Key('type').eq("Q")
+            },
+        )
+        return QuestionCard.from_dynamodb_object(response['Items'][0])
+
+    @staticmethod
+    def get_answer_cards(distribution: Distribution, amount: int) -> List[AnswerCard]:
+        response = GameData.cards_table.query(
+        Limit=amount,
+        KeyConditionExpression={
+                Key(distribution.value).gt(str(Random().uniform(0, 1))) & Key('type').eq("A")
+            },
+        )
+        return [AnswerCard.from_dynamodb_object(response['Items'][i]) for i in range(len(response['Items']))]
+
+    @staticmethod
     def append_new_round(session_id: str) -> GameRound:
-        def pick_question_card() -> QuestionCard:
-            pass  # follow the DynamoDB Categorized example here: https://bahr.dev/2021/01/07/serverless-random-records/#dynamodb-fully-random
 
         extended_session: GameSession = GameData.get_session(session_id)
+        extended_session.phase = Phase.InProgress
+        GameData.write_session(extended_session)
+
         current_round: GameRound = extended_session.active_round
         new_round = GameRound(
             session_id=current_round.session_id,
             round=current_round.round + 1,
+            arbiter=Random.choice(extended_session.players),
             winner_id= None,
-            question_card_text=pick_question_card().text,
+            question_card=GameData.get_question_card(Distribution.Uniform),
             answer_cards_suggested=[],
         )
+
         GameData.session_table.put_item(new_round.to_dynamodb_object())
         extended_session.recent_rounds.append(extended_session.active_round)
         extended_session.active_round = new_round
