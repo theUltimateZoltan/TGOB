@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { GameSession } from 'src/app/models/game-session';
-import { QuestionCard } from "../../models/question-card";
 
 @Component({
   selector: 'app-coordinator',
@@ -14,10 +13,7 @@ export class CoordinatorComponent implements OnInit {
   constructor() { }
 
   ngOnInit(): void {
-  }
 
-  get_next_question_card(): QuestionCard {
-    return new QuestionCard("1234")
-  } 
+  }
 
 }

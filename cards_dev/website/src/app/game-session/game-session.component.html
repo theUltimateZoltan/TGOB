@@ -1,1 +1,6 @@
-<app-coordinator *ngIf="is_coordinator" [session]="session"></app-coordinator>
+<app-coordinator *ngIf="this.is_coordinator" [session]="this.session"></app-coordinator>
+<div class="row" *ngIf="!this.is_coordinator">
+    <div class="col">
+        <button type="button" class="btn btn-primary m-auto p-3" (click)="on_start()">Start</button>
+    </div>
+</div>
