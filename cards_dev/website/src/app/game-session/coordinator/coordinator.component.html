@@ -5,7 +5,7 @@
         [textContent]="this.session!.round.question_card.text">
         </div>
         <div class="enrollment" 
-        *ngIf="this.session!.round && this.session!.phase == 'enrollment'">
+        *ngIf="this.session!.phase == 'enrollment'">
             <ul class="joining_players_list">
                 <li *ngFor="let player of this.session!.players" [textContent]="player.name">
                 </li>
