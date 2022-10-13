@@ -7,7 +7,7 @@ from typing import List, Union
 
 class Phase(Enum):
     Enrollment="enrollment"
-    InProgress="inprogress"
+    InProgress="in_progress"
     Complete="complete"
 
 class Distribution(Enum):
