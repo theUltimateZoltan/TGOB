@@ -1,13 +1,11 @@
-import { AnswerCard } from "./answer-card";
 import { Player } from "./player";
-import { QuestionCard } from "./question-card";
 
 export class Round {
-    question_card: QuestionCard
+    question_card: string
     arbiter: Player
     winner: Player | null
-    winning_card: AnswerCard | undefined
-    answer_cards_suggested: Array<AnswerCard>
+    winning_card: string | undefined
+    answer_cards_suggested: Array<string>
 
     constructor(json_object: any){
         this.question_card = json_object.question_card

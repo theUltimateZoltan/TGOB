@@ -22,9 +22,11 @@ export class GameSessionComponent implements OnInit {
 
   on_start() {
     const start_game_request = JSON.stringify({
+      "action": "start",
       "session_id": this.session!.joinCode,
       "player_data": this.player_data!.id_jwt,
     })
+    console.log(`Sending start game request: ${start_game_request}`)
     this.connection!.send(start_game_request)
   }
 

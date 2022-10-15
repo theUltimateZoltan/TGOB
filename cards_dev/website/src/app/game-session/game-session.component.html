@@ -1,6 +1,13 @@
 <app-coordinator *ngIf="this.is_coordinator" [session]="this.session"></app-coordinator>
-<div class="row" *ngIf="!this.is_coordinator">
-    <div class="col">
-        <button type="button" class="btn btn-primary m-auto p-3" (click)="on_start()">Start</button>
+<div *ngIf="!this.is_coordinator">
+    <div class="row" *ngIf="this.session!.phase == 'enrollment'">
+        <div class="col">
+            <button type="button" class="btn btn-primary m-auto p-3" (click)="on_start()">Start</button>
+        </div>
+    </div>
+    <div class="row" *ngIf="this.session!.phase == 'in_progress'">
+        <div class="col">
+            <div class="question_card" [innerText]="this.session!.round!.question_card!"></div>
+        </div>
     </div>
 </div>
