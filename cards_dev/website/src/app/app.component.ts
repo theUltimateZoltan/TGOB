@@ -50,7 +50,7 @@ export class AppComponent {
             console.log(`session: ${JSON.stringify(this.session!)}`)
             break;
           case "show_error":
-            console.log(`Error: ${JSON.parse(response_object.body.message)}`)
+            console.log(`Error: ${JSON.parse(response_object.body).message}`)
             // show a pretty and dismissable error message
             break;
         }

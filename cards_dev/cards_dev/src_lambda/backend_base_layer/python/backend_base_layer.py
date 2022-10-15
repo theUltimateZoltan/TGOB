@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 import logging
 import json
 from math import dist
@@ -9,7 +10,7 @@ from mypy_boto3_s3.service_resource import Bucket
 from mypy_boto3_apigatewaymanagementapi import ApiGatewayManagementApiClient
 from models import AnswerCard, Distribution, GameRound, GameSession, Phase, Player, QuestionCard, ResponseDirective
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 
 
 logger = logging.getLogger()
@@ -118,21 +119,23 @@ class GameData:
     @staticmethod
     def get_question_card(distribution: Distribution) -> QuestionCard:
         response = GameData.cards_table.query(
-        Limit=1,
-        KeyConditionExpression={
-                Key(distribution.value).gt(str(Random().uniform(0, 1))) & Key('type').eq("Q")
-            },
+            Limit=1,
+            IndexName=f"{distribution.value}_index",
+            KeyConditionExpression=Key("type").eq("Q") & Key(distribution.value).gt(Decimal(str(Random().random()))),
+            ReturnConsumedCapacity='TOTAL'
         )
+        logger.debug(f"Retreival of random question card has scanned {response['ScannedCount']} which consumed {response['ConsumedCapacity']['CapacityUnits']} RCU.")
         return QuestionCard.from_dynamodb_object(response['Items'][0])
 
     @staticmethod
     def get_answer_cards(distribution: Distribution, amount: int) -> List[AnswerCard]:
         response = GameData.cards_table.query(
-        Limit=amount,
-        KeyConditionExpression={
-                Key(distribution.value).gt(str(Random().uniform(0, 1))) & Key('type').eq("A")
-            },
+            Limit=amount,
+            IndexName=f"{distribution.value}_index",
+            KeyConditionExpression=Key("type").eq("A") & Key(distribution.value).gt(Decimal(str(Random().random()))),
+            ReturnConsumedCapacity='TOTAL'
         )
+        logger.debug(f"Retreival of random answer cards has scanned {response['ScannedCount']} which consumed {response['ConsumedCapacity']['CapacityUnits']} RCU.")
         return [AnswerCard.from_dynamodb_object(response['Items'][i]) for i in range(len(response['Items']))]
 
     @staticmethod
@@ -144,15 +147,16 @@ class GameData:
 
         current_round: GameRound = extended_session.active_round
         new_round = GameRound(
-            session_id=current_round.session_id,
-            round=current_round.round + 1,
-            arbiter=Random.choice(extended_session.players),
-            winner_id= None,
+            session_id=extended_session.session_id,
+            round=current_round.round + 1 if current_round else 1,
+            arbiter=Random().choice(extended_session.players),
+            winner= None,
             question_card=GameData.get_question_card(Distribution.Uniform),
             answer_cards_suggested=[],
+            winning_answer_index=None
         )
 
-        GameData.session_table.put_item(new_round.to_dynamodb_object())
+        GameData.session_table.put_item(Item=new_round.to_dynamodb_object())
         extended_session.recent_rounds.append(extended_session.active_round)
         extended_session.active_round = new_round
         if len(extended_session.recent_rounds) >= GameData.recent_rounds_buffer_size:

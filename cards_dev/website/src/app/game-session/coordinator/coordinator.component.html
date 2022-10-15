@@ -2,7 +2,7 @@
     <div class="col">
         <div class="question_card" 
         *ngIf="this.session!.round && this.session!.phase == 'in_progress'" 
-        [textContent]="this.session!.round.question_card.text">
+        [textContent]="this.session!.round.question_card">
         </div>
         <div class="enrollment" 
         *ngIf="this.session!.phase == 'enrollment'">
