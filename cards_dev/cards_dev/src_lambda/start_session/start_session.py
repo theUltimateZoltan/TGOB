@@ -11,14 +11,13 @@ def lambda_handler(event: dict, context: dict) -> dict:
     requesting_player: Player = Player(player_id_token, connection_id)
     logger.debug(f"Player identity {requesting_player.identity_token[:10]}... has requested to start game {session_id}")
     game_session: GameSession = GameData.get_session(session_id=session_id)
-    if player_id_token not in [player.identity_token for player in game_session.players]:
-        ApiRelay.post_to_connection(requesting_player.connection_id, {"message": "You are not listed in the requested session."}, 
-            ResponseDirective.ShowError ,is_error=True)
-    elif game_session.phase != Phase.Enrollment:
-        ApiRelay.post_to_connection(requesting_player.connection_id, {"message": "This game is not in a state that allowes starting."}, 
+    if game_session.phase != Phase.Enrollment:
+        ApiRelay.post_to_connection(requesting_player.connection_id, {"message": "This game is not in a state that allows starting."}, 
             ResponseDirective.ShowError, is_error=True)
     else:
         first_round: GameRound = GameData.append_new_round(game_session.session_id)
+        game_session.phase = Phase.InProgress
+        GameData.write_session(game_session)
         response = {
             "session": game_session.to_response_object(),
             "round": first_round.to_response_object()

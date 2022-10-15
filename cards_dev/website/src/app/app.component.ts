@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Session } from 'inspector';
 import { environment } from 'src/environments/environment';
 import { Websocket, WebsocketBuilder } from 'websocket-ts/lib';
 import { ConnectionRequest } from './models/connection-request';
@@ -41,7 +42,8 @@ export class AppComponent {
             break;
           case "update_round":
             console.log(`Updating round from response: ${response_object.body}`)
-            this.session!.round = new Round(JSON.parse(response_object.body))
+            this.session = new GameSession(JSON.parse(response_object.body).session)
+            this.session!.round = new Round(JSON.parse(response_object.body).round)
             console.log(`round: ${JSON.stringify(this.session!.round)}`)
             break;
           case "update_enrollment":
