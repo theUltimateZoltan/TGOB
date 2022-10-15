@@ -124,7 +124,7 @@ class GameData:
             KeyConditionExpression=Key("type").eq("Q") & Key(distribution.value).gt(Decimal(str(Random().random()))),
             ReturnConsumedCapacity='TOTAL'
         )
-        logger.debug(f"Retreival of random question card has scanned {response['ScannedCount']} which consumed {response['ConsumedCapacity']['CapacityUnits']} RCU.")
+        logger.debug(f"Retreival of random question card has scanned {response['ScannedCount']}; consumed {response['ConsumedCapacity']['CapacityUnits']} RCU.")
         return QuestionCard.from_dynamodb_object(response['Items'][0])
 
     @staticmethod
@@ -135,15 +135,13 @@ class GameData:
             KeyConditionExpression=Key("type").eq("A") & Key(distribution.value).gt(Decimal(str(Random().random()))),
             ReturnConsumedCapacity='TOTAL'
         )
-        logger.debug(f"Retreival of random answer cards has scanned {response['ScannedCount']} which consumed {response['ConsumedCapacity']['CapacityUnits']} RCU.")
+        logger.debug(f"Retreival of random answer cards has scanned {response['ScannedCount']}; consumed {response['ConsumedCapacity']['CapacityUnits']} RCU.")
         return [AnswerCard.from_dynamodb_object(response['Items'][i]) for i in range(len(response['Items']))]
 
     @staticmethod
     def append_new_round(session_id: str) -> GameRound:
 
         extended_session: GameSession = GameData.get_session(session_id)
-        extended_session.phase = Phase.InProgress
-        GameData.write_session(extended_session)
 
         current_round: GameRound = extended_session.active_round
         new_round = GameRound(

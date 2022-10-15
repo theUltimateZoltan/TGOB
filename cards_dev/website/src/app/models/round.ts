@@ -8,6 +8,7 @@ export class Round {
     answer_cards_suggested: Array<string>
 
     constructor(json_object: any){
+        console.log(`parsing round from json object: ${JSON.stringify(json_object)}`)
         this.question_card = json_object.question_card
         this.arbiter = json_object.arbiter
         this.winner = json_object.winner
