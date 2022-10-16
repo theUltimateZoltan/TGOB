@@ -7,6 +7,7 @@ import { GameSetupComponent } from './game-setup/game-setup.component';
 import { GameSessionComponent } from './game-session/game-session.component';
 import { CoordinatorComponent } from './game-session/coordinator/coordinator.component';
 import { UserComponent } from './user/user.component';
+import { ArbiterComponent } from './game-session/arbiter/arbiter.component';
 
 @NgModule({
   declarations: [
@@ -15,6 +16,7 @@ import { UserComponent } from './user/user.component';
     GameSessionComponent,
     CoordinatorComponent,
     UserComponent,
+    ArbiterComponent,
   ],
   imports: [
     BrowserModule,

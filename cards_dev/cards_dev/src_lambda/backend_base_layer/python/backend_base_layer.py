@@ -182,3 +182,7 @@ class GameData:
     @staticmethod
     def write_session(session: GameSession) -> None:
         GameData.session_table.put_item(Item=session.to_dynamodb_object())
+
+    @staticmethod
+    def write_round(round: GameRound) -> None:
+        GameData.session_table.put_item(Item=round.to_dynamodb_object())

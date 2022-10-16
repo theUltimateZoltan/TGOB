@@ -1,5 +1,6 @@
 <app-coordinator *ngIf="this.is_coordinator" [session]="this.session"></app-coordinator>
-<div *ngIf="!this.is_coordinator">
+<app-arbiter *ngIf="this.session?.round?.arbiter == this.player_data" [session]="this.session"></app-arbiter>
+<div *ngIf="!this.is_coordinator && this.session?.round?.arbiter != this.player_data">
     <div class="row" *ngIf="this.session!.phase == 'enrollment'">
         <div class="col">
             <button type="button" class="btn btn-primary m-auto p-3" (click)="on_start()">Start</button>

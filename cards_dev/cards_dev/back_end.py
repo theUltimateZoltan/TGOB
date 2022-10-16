@@ -140,6 +140,7 @@ class CardsBackend(Stack):
         self.__add_websocket_route_method("$connect", self.__provision_backend_lambda_function("new_connection"))
         self.__add_websocket_route_method("join", self.__provision_backend_lambda_function("join_session"))
         self.__add_websocket_route_method("start", self.__provision_backend_lambda_function("start_session"))
+        self.__add_websocket_route_method("answer", self.__provision_backend_lambda_function("choose_answer"))
 
     def __add_rest_resource_method(self, path: str, method: _HttpMethod, proxy_function: lambda_.Function) -> None:
         assert path in self.__rest_resources, "First create the resource, then add a method to it."

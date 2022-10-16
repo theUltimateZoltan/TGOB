@@ -33,7 +33,12 @@ export class GameSessionComponent implements OnInit {
 
   on_card_select(card: string): void {
     console.log(`selected answer: ${card}`)
-    // send selection to api
+    const answer_selection_request = JSON.stringify({
+      "action": "answer",
+      "session_id": this.session!.joinCode,
+      "player_data": this.player_data!.id_jwt,
+      "answer": card
+    })
+    this.connection!.send(answer_selection_request)
   }
-
 }
