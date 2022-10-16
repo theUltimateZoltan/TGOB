@@ -7,7 +7,7 @@
     </div>
     <div class="row" *ngIf="this.session!.phase == 'in_progress'">
         <div class="col">
-            <div class="question_card" [innerText]="this.session!.round!.question_card!"></div>
+            <button type="button" *ngFor="let acard of this.answer_cards" (click)="on_card_select(acard)" [innerText]="acard"></button>
         </div>
     </div>
 </div>
