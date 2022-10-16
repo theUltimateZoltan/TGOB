@@ -18,6 +18,7 @@ export class AppComponent {
   is_coordinator: boolean | undefined
   api_access_jwt: Map<string, string> | undefined
   ws_connection: Websocket | undefined
+  answer_cards_hand: Array<string> | undefined
 
   on_connection_requested(session_join_request: ConnectionRequest) {
     this.is_coordinator = session_join_request.is_coordinator
@@ -33,26 +34,30 @@ export class AppComponent {
       .onError((i, ev) => { console.log("Game api connection error.") })
       .onMessage((i, ev) => { 
         const response_object: any = JSON.parse(ev.data)
+        const response_body = JSON.parse(response_object.body)
         switch (response_object.directive) {
           case "update_session":
             console.log(`Updating session from response: ${response_object.body}`)
-            this.session = new GameSession(JSON.parse(response_object.body))
+            this.session = new GameSession(response_body)
             console.log(`session: ${JSON.stringify(this.session)}`)
             break;
           case "update_round":
             console.log(`Updating round from response: ${response_object.body}`)
-            this.session = new GameSession(JSON.parse(response_object.body).session)
-            this.session!.round = new Round(JSON.parse(response_object.body).round)
+            this.session = new GameSession(response_body.session)
+            this.session!.round = new Round(response_body.round)
             console.log(`round: ${JSON.stringify(this.session!.round)}`)
-            // player needs to process dealt answer cards. How?
+            if (response_body.acards) {
+              this.answer_cards_hand = response_body.acards.map((card: { text: string })=>card.text)
+              console.log(`received hand: ${this.answer_cards_hand}`)
+            }
             break;
           case "update_enrollment":
             console.log(`Updating session enrollment from response: ${response_object.body}`)
-            this.session!.players.push(new Player(JSON.parse(response_object.body).identity_token))
+            this.session!.players.push(new Player(response_body.identity_token))
             console.log(`session: ${JSON.stringify(this.session!)}`)
             break;
           case "show_error":
-            console.log(`Error: ${JSON.parse(response_object.body).message}`)
+            console.log(`Error: ${response_body.message}`)
             // show a pretty and dismissable error message
             break;
         }

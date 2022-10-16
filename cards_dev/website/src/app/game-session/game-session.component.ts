@@ -32,7 +32,8 @@ export class GameSessionComponent implements OnInit {
   }
 
   on_card_select(card: string): void {
-    // send card selection and block other selections
+    console.log(`selected answer: ${card}`)
+    // send selection to api
   }
 
 }

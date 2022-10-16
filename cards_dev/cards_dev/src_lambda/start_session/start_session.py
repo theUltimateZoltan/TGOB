@@ -25,7 +25,7 @@ def lambda_handler(event: dict, context: dict) -> dict:
         ApiRelay.post_to_connection(game_session.coordinator_connection_id, response, ResponseDirective.UpdateRound)
         for player in game_session.players:
             ApiRelay.post_to_connection(player.connection_id, {
-                "cards": [card.to_response_object() for card in GameData.get_answer_cards(Distribution.Uniform, 5)],
+                "acards": [card.to_response_object() for card in GameData.get_answer_cards(Distribution.Uniform, 5)],
                 **response
             }, ResponseDirective.UpdateRound)
             
