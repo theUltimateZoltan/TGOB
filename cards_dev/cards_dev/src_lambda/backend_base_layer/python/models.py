@@ -44,26 +44,36 @@ class AnswerCard(SessionDataClass):
     def from_dynamodb_object(dynamodb_obj: dict) -> AnswerCard:
         return AnswerCard(dynamodb_obj.get("text"))
 
+    def to_dynamodb_object(self) -> dict:
+        return super().to_dynamodb_object([], {})
+
     def to_response_object(self) -> dict:
         return super().to_response_object([], {})
 
+@dataclass
+class QuestionCard(SessionDataClass):
+    text: str
+    blank_format: str
 
-class QuestionCard:
-    defualt_blank_format: str = "{$}"
+    @staticmethod
+    def defualt_blank_format() -> str:
+        return "{$}"
 
     def __init__(self, text: str, custom_blank_format: str=None) -> None:
-        self.__text = text
-        self.__blank_format = custom_blank_format or QuestionCard.defualt_blank_format
+        self.text = text
+        self.blank_format = custom_blank_format or QuestionCard.defualt_blank_format()
 
-    @property
-    def text(self):
-        return self.__text.replace(self.__blank_format, "___")
+    def get_display_text(self) -> str:
+        return self.text.replace(self.blank_format, "____")
 
     def answer_with(self, answers: List[AnswerCard]) -> str:
-        filled_in_text = self.__text
+        filled_in_text = self.text
         for answer in answers:
-            filled_in_text = filled_in_text.replace(self.__blank_format, answer.text, count=1)
-        return filled_in_text.replace(self.__blank_format, "")
+            filled_in_text = filled_in_text.replace(self.blank_format, answer.text, count=1)
+        return filled_in_text.replace(self.blank_format, "")
+
+    def to_dynamodb_object(self) -> dict:
+        return super().to_dynamodb_object([], {})
 
     @staticmethod
     def from_dynamodb_object(dynamodb_obj: dict) -> QuestionCard:
@@ -100,19 +110,30 @@ class GameRound(SessionDataClass):
     winning_answer_index: Union[int, None]
 
     def to_dynamodb_object(self) -> dict:
-        return super().to_dynamodb_object(["question_card"], {"question_card": self.question_card.text})
+        return super().to_dynamodb_object(["question_card"], {"question_card": self.question_card.to_dynamodb_object()})
 
     def to_archive_object(self) -> dict:
         return self.to_dict()  # TODO what should be stored in archive?
 
     def to_response_object(self) -> dict:
         return super().to_response_object(["question_card", "winner", "arbiter", "answer_cards_suggested"], {
-            "question_card": self.question_card.text,
+            "question_card": self.question_card.get_display_text(),
             "winner": self.winner.identity_token if self.winner else None,
             "arbiter": self.arbiter.identity_token,
             "answer_cards_suggested": [card.text for card in self.answer_cards_suggested]
             })
 
+    @staticmethod
+    def from_dynamodb_object(dynamodb_obj: dict) -> GameRound:
+        return GameRound(
+            dynamodb_obj.get("session_id"),
+            int(dynamodb_obj.get("round")),
+            Player.from_dynamodb_object(dynamodb_obj.get("arbiter")),
+            QuestionCard.from_dynamodb_object(dynamodb_obj.get("question_card")),
+            [AnswerCard.from_dynamodb_object(card) for card in dynamodb_obj.get("answer_cards_suggested")],
+            Player.from_dynamodb_object(dynamodb_obj.get("winner")) if dynamodb_obj.get("winner") else None,
+            dynamodb_obj.get("winning_answer_index"),
+        )
 
 @dataclass
 class GameSession(SessionDataClass):

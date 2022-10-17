@@ -2,7 +2,6 @@ from datetime import datetime
 from decimal import Decimal
 import logging
 import json
-from math import dist
 from random import Random
 from typing import List, Union
 from mypy_boto3_dynamodb.service_resource import Table
@@ -10,7 +9,7 @@ from mypy_boto3_s3.service_resource import Bucket
 from mypy_boto3_apigatewaymanagementapi import ApiGatewayManagementApiClient
 from models import AnswerCard, Distribution, GameRound, GameSession, Phase, Player, QuestionCard, ResponseDirective
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Key
 
 
 logger = logging.getLogger()
@@ -99,8 +98,8 @@ class GameData:
                 phase=Phase(metadata_object.get("phase")),
                 coordinator_connection_id=metadata_object.get("coordinator_connection_id"),
                 players=[Player.from_dynamodb_object(p) for p in metadata_object.get("players")],
-                active_round=retrieved_round_objects[-1] if len(retrieved_round_objects) > 1 else None,
-                recent_rounds=retrieved_round_objects[1:-1] if len(retrieved_round_objects) > 2 else [],
+                active_round=GameRound.from_dynamodb_object(retrieved_round_objects[-1]) if len(retrieved_round_objects) > 1 else None,
+                recent_rounds=[GameRound.from_dynamodb_object(r) for r in retrieved_round_objects[1:-1]] if len(retrieved_round_objects) > 2 else [],
             )
 
     @staticmethod
@@ -139,15 +138,13 @@ class GameData:
         return [AnswerCard.from_dynamodb_object(response['Items'][i]) for i in range(len(response['Items']))]
 
     @staticmethod
-    def append_new_round(session_id: str) -> GameRound:
+    def append_new_round(session: GameSession) -> GameRound:
 
-        extended_session: GameSession = GameData.get_session(session_id)
-
-        current_round: GameRound = extended_session.active_round
+        current_round: GameRound = session.active_round
         new_round = GameRound(
-            session_id=extended_session.session_id,
+            session_id=session.session_id,
             round=current_round.round + 1 if current_round else 1,
-            arbiter=Random().choice(extended_session.players),
+            arbiter=Random().choice(session.players),
             winner= None,
             question_card=GameData.get_question_card(Distribution.Uniform),
             answer_cards_suggested=[],
@@ -155,11 +152,11 @@ class GameData:
         )
 
         GameData.session_table.put_item(Item=new_round.to_dynamodb_object())
-        extended_session.recent_rounds.append(extended_session.active_round)
-        extended_session.active_round = new_round
-        if len(extended_session.recent_rounds) >= GameData.recent_rounds_buffer_size:
-            GameData.archive_rounds(extended_session.recent_rounds)
-            extended_session.recent_rounds = []
+        session.recent_rounds.append(session.active_round)
+        session.active_round = new_round
+        if len(session.recent_rounds) >= GameData.recent_rounds_buffer_size:
+            GameData.archive_rounds(session.recent_rounds)
+            session.recent_rounds = []
 
         return new_round
 

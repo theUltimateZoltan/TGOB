@@ -1,4 +1,4 @@
-from models import GameSession, Phase, Player, ResponseDirective
+from models import AnswerCard, GameSession, Phase, Player, ResponseDirective
 from backend_base_layer import GameData, ApiRelay, logger
 
 
@@ -15,7 +15,7 @@ def lambda_handler(event: dict, context: dict) -> dict:
         ApiRelay.post_to_connection(requesting_player.connection_id, {"message": "This game is not in a state that accepts answers."}, 
             ResponseDirective.ShowError, is_error=True)
     else:
-        game_session.active_round.answer_cards_suggested.append(answer)
+        game_session.active_round.answer_cards_suggested.append(AnswerCard(answer))
         GameData.write_round(game_session.active_round)
         response = game_session.active_round.to_response_object()
         ApiRelay.post_to_connection(game_session.coordinator_connection_id, response, ResponseDirective.UpdateRound)

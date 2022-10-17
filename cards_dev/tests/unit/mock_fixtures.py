@@ -93,6 +93,11 @@ def __mock_cards_table():
     mock_cards_table.put_item(Item={"text": "common_qcard", "uniform_distribution": Decimal("1"), "type": "Q"})
     mock_cards_table.put_item(Item={"text": "uncommon_qcard", "uniform_distribution": Decimal("0.5"), "type": "Q"})
     mock_cards_table.put_item(Item={"text": "rare_qcard", "uniform_distribution": Decimal("0.1"), "type": "Q"})
+    mock_cards_table.put_item(Item={"text": "common_acard", "uniform_distribution": Decimal("1"), "type": "A"})
+    mock_cards_table.put_item(Item={"text": "uncommon_acard", "uniform_distribution": Decimal("0.9"), "type": "A"})
+    mock_cards_table.put_item(Item={"text": "rare_acard", "uniform_distribution": Decimal("0.7"), "type": "A"})
+    mock_cards_table.put_item(Item={"text": "epic_acard", "uniform_distribution": Decimal("0.4"), "type": "A"})
+    mock_cards_table.put_item(Item={"text": "legendary_acard", "uniform_distribution": Decimal("0.1"), "type": "A"})
     
     return mock_cards_table
 

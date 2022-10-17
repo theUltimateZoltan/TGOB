@@ -15,7 +15,7 @@ def lambda_handler(event: dict, context: dict) -> dict:
         ApiRelay.post_to_connection(requesting_player.connection_id, {"message": "This game is not in a state that allows starting."}, 
             ResponseDirective.ShowError, is_error=True)
     else:
-        first_round: GameRound = GameData.append_new_round(game_session.session_id)
+        first_round: GameRound = GameData.append_new_round(game_session)
         game_session.phase = Phase.InProgress
         GameData.write_session(game_session)
         response = {
