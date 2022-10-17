@@ -9,7 +9,7 @@ def session_start_request(session: GameSession, player: Player) -> str:
     return json.dumps({
       "action": "start",
       "session_id": session.session_id,
-      "player_data": player.identity_token
+      "player_data":  {"email": player.email, "username": player.name}
     })
 
 def test_simple_request(session_archive, post_to_connection, dummy_session: GameSession, game_data) -> None:

@@ -23,13 +23,21 @@ export class GameSetupComponent implements OnInit {
   }
 
   join_as_player(session_joincode: string): void {
-    const request_body: string = JSON.stringify({"action": "join", "session_id": session_joincode, "is_coordinator": false, "player_data": this.user!.id_jwt})
+    const request_body: string = JSON.stringify({
+      "action": "join", 
+      "session_id": session_joincode, 
+      "is_coordinator": false, 
+      "player_data": {"email":this.user!.name, "username": this.user!.email}
+    })
     this.connection_request.emit(new ConnectionRequest(request_body, false))
   }
 
   async on_create(): Promise<void> {
     let created_session_id: string = await this.create_session()
-    const request_body: string = JSON.stringify({"action": "join", "session_id": created_session_id, "is_coordinator": true})
+    const request_body: string = JSON.stringify({"action": "join", 
+    "session_id": created_session_id, 
+    "player_data": {"email":this.user!.name, "username": this.user!.email}, 
+    "is_coordinator": true})
     this.connection_request.emit(new ConnectionRequest(request_body, true))
   }
 

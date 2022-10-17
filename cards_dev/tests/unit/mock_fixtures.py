@@ -130,7 +130,7 @@ def post_to_connection() -> ApiGatewayManagementApiClient:
 
 @pytest.fixture
 def dummy_session(game_data) -> GameSession:
-    mocked_player = Player("mock_identity_token", "mock_connection_id").to_dynamodb_object()
+    mocked_player = Player("mock_email", "mock_un", "mock_connection_id").to_dynamodb_object()
     arbitrary_game_session = GameSession("Existingid", Phase.InProgress, "", [mocked_player], active_round=None, recent_rounds=[])
     GameData.session_table.put_item(Item=arbitrary_game_session.to_dynamodb_object())
     yield GameData.get_session(arbitrary_game_session.session_id)

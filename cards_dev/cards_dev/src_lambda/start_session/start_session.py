@@ -1,15 +1,16 @@
+from typing import Dict
 from s3transfer import logger
 from models import Distribution, GameRound, GameSession, Phase, Player, ResponseDirective
 from backend_base_layer import GameData, ApiRelay
 
 
 def lambda_handler(event: dict, context: dict) -> dict:
-    event_body = ApiRelay.get_event_body(event)
-    session_id = event_body.get("session_id")
-    player_id_token = event_body.get("player_data")
-    connection_id = event.get("requestContext").get("connectionId")
-    requesting_player: Player = Player(player_id_token, connection_id)
-    logger.debug(f"Player identity {requesting_player.identity_token[:10]}... has requested to start game {session_id}")
+    event_body: dict = ApiRelay.get_event_body(event)
+    session_id: str = event_body.get("session_id")
+    player_data: Dict[str, str] = event_body.get("player_data")
+    connection_id: str = event.get("requestContext").get("connectionId")
+    requesting_player: Player = Player(player_data.get("email"), player_data.get("username"), connection_id)
+    logger.debug(f"Player with email {requesting_player.email}... has requested to start game {session_id}")
     game_session: GameSession = GameData.get_session(session_id=session_id)
     if game_session.phase != Phase.Enrollment:
         ApiRelay.post_to_connection(requesting_player.connection_id, {"message": "This game is not in a state that allows starting."}, 

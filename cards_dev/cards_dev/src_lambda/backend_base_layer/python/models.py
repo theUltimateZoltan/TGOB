@@ -33,8 +33,8 @@ class SessionDataClass:
         return self.to_dict(fluff_attributes, extra_attributes)
 
     @abstractmethod
-    def to_response_object(self, fluff_attributes: List[str], extra_attributes: dict) -> dict:
-        return self.to_dict(fluff_attributes, extra_attributes)
+    def to_response_object(self, exclude_attributes: List[str], extra_attributes: dict) -> dict:
+        return self.to_dict(exclude_attributes, extra_attributes)
 
 @dataclass
 class AnswerCard(SessionDataClass):
@@ -81,7 +81,8 @@ class QuestionCard(SessionDataClass):
 
 @dataclass
 class Player(SessionDataClass):
-    identity_token: str
+    email: str
+    name: str
     connection_id: str
 
     def to_dynamodb_object(self) -> dict:
@@ -89,10 +90,10 @@ class Player(SessionDataClass):
 
     @staticmethod
     def from_dynamodb_object(dynamodb_obj: dict) -> Player:
-        return Player(dynamodb_obj.get("identity_token"), dynamodb_obj.get("connection_id"))
+        return Player(dynamodb_obj.get("email"), dynamodb_obj.get("name"),dynamodb_obj.get("connection_id"))
 
     def to_response_object(self) -> dict:
-        return super().to_response_object(["connection_id"], {})
+        return super().to_response_object(["connection_id", "email"], {})
 
 
 ##
@@ -118,8 +119,8 @@ class GameRound(SessionDataClass):
     def to_response_object(self) -> dict:
         return super().to_response_object(["question_card", "winner", "arbiter", "answer_cards_suggested"], {
             "question_card": self.question_card.get_display_text(),
-            "winner": self.winner.identity_token if self.winner else None,
-            "arbiter": self.arbiter.identity_token,
+            "winner": self.winner.name if self.winner else None,
+            "arbiter": self.arbiter.email,
             "answer_cards_suggested": [card.text for card in self.answer_cards_suggested]
             })
 

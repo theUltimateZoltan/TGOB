@@ -11,7 +11,7 @@ def session_start_request(session: GameSession, player: Player, answer: AnswerCa
     return json.dumps({
       "action": "answer",
       "session_id": session.session_id,
-      "player_data": player.identity_token,
+      "player_data": {"email": player.email, "username": player.name},
       "answer": answer.text
     })
 
