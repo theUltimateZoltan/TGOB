@@ -12,7 +12,7 @@ def lambda_handler(event: dict, context: dict) -> dict:
     requesting_player: Player = Player(player_data.get("email"), player_data.get("username"), connection_id)
     logger.debug(f"Player with email {requesting_player.email}... has requested to start game {session_id}")
     game_session: GameSession = GameData.get_session(session_id=session_id)
-    if game_session.phase != Phase.Enrollment:
+    if game_session.phase not in [Phase.Enrollment, Phase.RoundFinished]:
         ApiRelay.post_to_connection(requesting_player.connection_id, {"message": "This game is not in a state that allows starting."}, 
             ResponseDirective.ShowError, is_error=True)
     elif len(game_session.players) < 2:
