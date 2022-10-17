@@ -1,15 +1,20 @@
 <div class="row">
     <div class="col">
         <div class="question_card" 
-        *ngIf="this.session!.round && this.session!.phase == 'in_progress'" 
-        [textContent]="this.session!.round.question_card">
+            *ngIf="this.session!.round && this.session!.phase == 'in_progress'" 
+            [textContent]="this.session!.round.question_card">
         </div>
         <div class="enrollment" 
-        *ngIf="this.session!.phase == 'enrollment'">
+            *ngIf="this.session!.phase == 'enrollment'">
             <ul class="joining_players_list">
                 <li *ngFor="let player of this.session!.players" [textContent]="player.name">
                 </li>
             </ul>
+        </div>
+        <div class="round_ending"
+            *ngIf="this.session!.phase == 'round_finished'">
+            Round finished!<br/>
+            selected answer: <span [innerText]="this.get_winning_answer()"></span>
         </div>
     </div>
 </div>

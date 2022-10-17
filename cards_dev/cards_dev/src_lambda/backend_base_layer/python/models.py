@@ -8,6 +8,7 @@ from typing import List, Union
 class Phase(Enum):
     Enrollment="enrollment"
     InProgress="in_progress"
+    RoundFinished="round_finished"
     Complete="complete"
 
 class Distribution(Enum):
@@ -16,6 +17,7 @@ class Distribution(Enum):
 class ResponseDirective(Enum):
     UpdateSession="update_session"
     UpdateRound="update_round"
+    EndRound="end_round"
     UpdateEnrollment="update_enrollment"
     ShowError="show_error"
     Pass="pass"

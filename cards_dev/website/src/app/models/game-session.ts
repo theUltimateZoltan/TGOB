@@ -1,7 +1,7 @@
 import { Player } from "./player"
 import { Round } from "./round"
 
-type Phase = 'enrollment' | 'in_progress' | 'complete'
+type Phase = 'enrollment' | 'in_progress' | 'complete' | 'round_finished'
 
 export class GameSession {
     connection_request: string

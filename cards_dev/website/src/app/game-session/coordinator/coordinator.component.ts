@@ -16,4 +16,7 @@ export class CoordinatorComponent implements OnInit {
 
   }
 
+  get_winning_answer(): string {
+    return this.session!.round!.winning_card!
+  }
 }

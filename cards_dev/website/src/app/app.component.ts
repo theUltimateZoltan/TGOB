@@ -40,22 +40,24 @@ export class AppComponent {
           case "update_session":
             console.log(`Updating session from response: ${response_object.body}`)
             this.session = new GameSession(response_body)
-            console.log(`session: ${JSON.stringify(this.session)}`)
             break;
           case "update_round":
             console.log(`Updating round from response: ${response_object.body}`)
             this.session = new GameSession(response_body.session)
             this.session!.round = new Round(response_body.round)
-            console.log(`round: ${JSON.stringify(this.session!.round)}`)
             if (response_body.acards) {
               this.answer_cards_hand = response_body.acards.map((card: { text: string })=>card.text)
-              console.log(`received hand: ${this.answer_cards_hand}`)
             }
             break;
           case "update_enrollment":
             console.log(`Updating session enrollment from response: ${response_object.body}`)
             this.session!.players.push(new Player(response_body.email, response_body.name))
-            console.log(`session: ${JSON.stringify(this.session!)}`)
+            break;
+          case "end_round":
+            console.log(`Round finished with response: ${response_object.body}`)
+            this.session!.players.push(new Player(response_body.email, response_body.name))
+            this.session = new GameSession(response_body.session)
+            this.session!.round = new Round(response_body.round)
             break;
           case "show_error":
             console.log(`Error: ${response_body.message}`)

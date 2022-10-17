@@ -14,18 +14,23 @@ def lambda_handler(event: dict, context: dict) -> dict:
     if game_session.phase != Phase.InProgress:
         ApiRelay.post_to_connection(requesting_player.connection_id, {"message": "This game is not in a state that accepts arbitration."}, 
             ResponseDirective.ShowError, is_error=True)
+    elif connection_id != game_session.active_round.arbiter.connection_id:
+        ApiRelay.post_to_connection(requesting_player.connection_id, {"message": "You are not this round's arbitrator."}, 
+            ResponseDirective.ShowError, is_error=True)
     else:
         game_session.active_round.winning_answer_index = game_session.active_round.answer_cards_suggested.index(AnswerCard(arbitration))
+        game_session.phase = Phase.RoundFinished
         GameData.write_round(game_session.active_round)
-        
+
         response = {
             "session": game_session.to_response_object(),
             "round": game_session.active_round.to_response_object()
         }
-        ApiRelay.post_to_connection(game_session.coordinator_connection_id, response, ResponseDirective.UpdateRound)
 
-        if len(game_session.active_round.answer_cards_suggested) >= len(game_session.players)-1:
-            ApiRelay.post_to_connection(game_session.active_round.arbiter.connection_id, response, ResponseDirective.UpdateRound)
+        ApiRelay.post_to_connection(game_session.coordinator_connection_id, response, ResponseDirective.EndRound)
+
+        for player in game_session.players:
+            ApiRelay.post_to_connection(player.connection_id, response, ResponseDirective.EndRound)
 
 
     return {"statusCode": 200}
