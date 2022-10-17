@@ -5,6 +5,7 @@ import { ConnectionRequest } from './models/connection-request';
 import { GameSession } from './models/game-session';
 import { Player } from './models/player';
 import { Round } from './models/round';
+import jwt_decode from 'jwt-decode';
 
 @Component({
   selector: 'app-root',
@@ -53,7 +54,7 @@ export class AppComponent {
             break;
           case "update_enrollment":
             console.log(`Updating session enrollment from response: ${response_object.body}`)
-            this.session!.players.push(new Player(response_body.identity_token))
+            this.session!.players.push(new Player(response_body.email, response_body.name))
             console.log(`session: ${JSON.stringify(this.session!)}`)
             break;
           case "show_error":
@@ -84,8 +85,17 @@ export class AppComponent {
   get_logged_in_user(): Player | undefined {
     let id_token: string = this.get_api_access_token()
     if (id_token) {
-      return new Player(id_token)
+      const user_details: any = jwt_decode(id_token)
+      return new Player(user_details.email, user_details.name)
     }
     return undefined
+  }
+
+  get_session_stringified(): string {
+    return JSON.stringify(this.session)
+  }
+
+  get_logged_in_user_stringified(): string {
+    return JSON.stringify(this.get_logged_in_user())
   }
 }

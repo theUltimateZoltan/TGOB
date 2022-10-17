@@ -63,7 +63,7 @@ class QuestionCard(SessionDataClass):
         self.text = text
         self.blank_format = custom_blank_format or QuestionCard.defualt_blank_format()
 
-    def get_display_text(self) -> str:
+    def to_response_object(self) -> str:
         return self.text.replace(self.blank_format, "____")
 
     def answer_with(self, answers: List[AnswerCard]) -> str:
@@ -93,7 +93,7 @@ class Player(SessionDataClass):
         return Player(dynamodb_obj.get("email"), dynamodb_obj.get("name"),dynamodb_obj.get("connection_id"))
 
     def to_response_object(self) -> dict:
-        return super().to_response_object(["connection_id", "email"], {})
+        return super().to_response_object(["connection_id"], {})
 
 
 ##
@@ -118,10 +118,10 @@ class GameRound(SessionDataClass):
 
     def to_response_object(self) -> dict:
         return super().to_response_object(["question_card", "winner", "arbiter", "answer_cards_suggested"], {
-            "question_card": self.question_card.get_display_text(),
-            "winner": self.winner.name if self.winner else None,
-            "arbiter": self.arbiter.email,
-            "answer_cards_suggested": [card.text for card in self.answer_cards_suggested]
+            "question_card": self.question_card.to_response_object(),
+            "winner": self.winner.to_response_object() if self.winner else None,
+            "arbiter": self.arbiter.to_response_object(),
+            "answer_cards_suggested": [card.to_response_object() for card in self.answer_cards_suggested]
             })
 
     @staticmethod

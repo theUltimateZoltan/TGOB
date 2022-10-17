@@ -25,7 +25,7 @@ export class GameSessionComponent implements OnInit {
     const start_game_request = JSON.stringify({
       "action": "start",
       "session_id": this.session!.joinCode,
-      "player_data": {"email":this.player_data!.name, "username": this.player_data!.email},
+      "player_data": {"email":this.player_data!.email, "username": this.player_data!.name},
     })
     console.log(`Sending start game request: ${start_game_request}`)
     this.connection!.send(start_game_request)
@@ -36,7 +36,7 @@ export class GameSessionComponent implements OnInit {
     const answer_selection_request = JSON.stringify({
       "action": "answer",
       "session_id": this.session!.joinCode,
-      "player_data": {"email":this.player_data!.name, "username": this.player_data!.email},
+      "player_data": {"email":this.player_data!.email, "username": this.player_data!.name},
       "answer": card
     })
     this.connection!.send(answer_selection_request)

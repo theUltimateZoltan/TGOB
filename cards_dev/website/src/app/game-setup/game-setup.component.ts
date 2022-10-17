@@ -27,7 +27,7 @@ export class GameSetupComponent implements OnInit {
       "action": "join", 
       "session_id": session_joincode, 
       "is_coordinator": false, 
-      "player_data": {"email":this.user!.name, "username": this.user!.email}
+      "player_data": {"email":this.user!.email, "username": this.user!.name}
     })
     this.connection_request.emit(new ConnectionRequest(request_body, false))
   }
@@ -36,7 +36,7 @@ export class GameSetupComponent implements OnInit {
     let created_session_id: string = await this.create_session()
     const request_body: string = JSON.stringify({"action": "join", 
     "session_id": created_session_id, 
-    "player_data": {"email":this.user!.name, "username": this.user!.email}, 
+    "player_data": {"email":this.user!.email, "username": this.user!.name}, 
     "is_coordinator": true})
     this.connection_request.emit(new ConnectionRequest(request_body, true))
   }

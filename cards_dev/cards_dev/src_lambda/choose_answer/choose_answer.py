@@ -23,7 +23,7 @@ def lambda_handler(event: dict, context: dict) -> dict:
         }
         ApiRelay.post_to_connection(game_session.coordinator_connection_id, response, ResponseDirective.UpdateRound)
 
-        if len(game_session.active_round.answer_cards_suggested) == len(game_session.players):
+        if len(game_session.active_round.answer_cards_suggested) >= len(game_session.players)-1:
             ApiRelay.post_to_connection(game_session.active_round.arbiter.connection_id, response, ResponseDirective.UpdateRound)
 
 
