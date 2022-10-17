@@ -1,21 +1,23 @@
 <app-coordinator *ngIf="this.is_coordinator" [session]="this.session"></app-coordinator>
 
 <div class="non_coordinating_player" *ngIf="!this.is_coordinator">
-    <app-arbiter *ngIf="this.session?.round?.arbiter?.email == this.player_data?.email" 
-        [session]="this.session"
-        [connection]="this.connection"
-        [player_data]="this.player_data"
-    ></app-arbiter>
+    <div class="active_round_container">
+        <app-arbiter *ngIf="this.session?.round?.arbiter?.email == this.player_data?.email" 
+            [session]="this.session"
+            [connection]="this.connection"
+            [player_data]="this.player_data"
+        ></app-arbiter>
 
-    <div *ngIf="this.session?.round?.arbiter?.email != this.player_data?.email">
-        <div class="row" *ngIf="this.session!.phase == 'enrollment'">
-            <div class="col">
-                <button type="button" class="btn btn-primary m-auto p-3" (click)="on_start()">Start</button>
+        <div *ngIf="this.session?.round?.arbiter?.email != this.player_data?.email">
+            <div class="row" *ngIf="this.session!.phase == 'enrollment' || this.session!.phase == 'round_finished'">
+                <div class="col">
+                    <button type="button" class="btn btn-primary m-auto p-3" (click)="on_start()">Start</button>
+                </div>
             </div>
-        </div>
-        <div class="row" *ngIf="this.session!.phase == 'in_progress'">
-            <div class="col">
-                <button type="button" *ngFor="let acard of this.answer_cards" (click)="on_card_select(acard)" [innerText]="acard"></button>
+            <div class="row" *ngIf="this.session!.phase == 'in_progress'">
+                <div class="col">
+                    <button type="button" *ngFor="let acard of this.answer_cards" (click)="on_card_select(acard)" [innerText]="acard"></button>
+                </div>
             </div>
         </div>
     </div>
