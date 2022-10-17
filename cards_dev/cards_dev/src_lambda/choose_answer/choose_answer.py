@@ -17,7 +17,10 @@ def lambda_handler(event: dict, context: dict) -> dict:
     else:
         game_session.active_round.answer_cards_suggested.append(AnswerCard(answer))
         GameData.write_round(game_session.active_round)
-        response = game_session.active_round.to_response_object()
+        response = {
+            "session": game_session.to_response_object(),
+            "round": game_session.active_round.to_response_object()
+        }
         ApiRelay.post_to_connection(game_session.coordinator_connection_id, response, ResponseDirective.UpdateRound)
 
         if len(game_session.active_round.answer_cards_suggested) == len(game_session.players):
