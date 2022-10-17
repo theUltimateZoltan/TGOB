@@ -1,5 +1,5 @@
 import json
-from cards_dev.src_lambda.start_session import start_session
+from cards_dev.src_lambda.start_round import start_round
 from .mock_fixtures import *
 
 def decode_callback_data(encoded_data: bytes) -> dict:
@@ -16,4 +16,4 @@ def test_simple_request(session_archive, post_to_connection, dummy_session: Game
     mocked_connection_id = "123445"
     dummy_session.phase = Phase.Enrollment
     GameData.write_session(dummy_session)
-    start_session.lambda_handler({"body":session_start_request(dummy_session, dummy_session.players[0]), "requestContext": {"connectionId": mocked_connection_id}}, {})
+    start_round.lambda_handler({"body":session_start_request(dummy_session, dummy_session.players[0]), "requestContext": {"connectionId": mocked_connection_id}}, {})

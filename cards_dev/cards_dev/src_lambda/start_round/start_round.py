@@ -15,18 +15,23 @@ def lambda_handler(event: dict, context: dict) -> dict:
     if game_session.phase != Phase.Enrollment:
         ApiRelay.post_to_connection(requesting_player.connection_id, {"message": "This game is not in a state that allows starting."}, 
             ResponseDirective.ShowError, is_error=True)
+    elif len(game_session.players) < 2:
+        ApiRelay.post_to_connection(requesting_player.connection_id, {"message": "You can't really play with less than 2 players."}, 
+            ResponseDirective.ShowError, is_error=True)
     else:
-        first_round: GameRound = GameData.append_new_round(game_session)
-        game_session.phase = Phase.InProgress
-        GameData.write_session(game_session)
+        new_round: GameRound = GameData.append_new_round(game_session)
+        if game_session.phase != Phase.InProgress:
+            game_session.phase = Phase.InProgress
+            GameData.write_session(game_session)
+
         response = {
             "session": game_session.to_response_object(),
-            "round": first_round.to_response_object()
+            "round": new_round.to_response_object()
         }
         ApiRelay.post_to_connection(game_session.coordinator_connection_id, response, ResponseDirective.UpdateRound)
         for player in game_session.players:
             ApiRelay.post_to_connection(player.connection_id, {
-                "acards": [card.to_response_object() for card in GameData.get_answer_cards(Distribution.Uniform, 5)],
+                "acards": [card.to_response_object() for card in GameData.get_answer_cards(Distribution.Uniform, 6)],
                 **response
             }, ResponseDirective.UpdateRound)
             

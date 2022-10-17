@@ -139,7 +139,7 @@ class CardsBackend(Stack):
         self.__add_rest_resource_method("session", _HttpMethod.POST, self.__provision_backend_lambda_function("create_new_session"))
         self.__add_websocket_route_method("$connect", self.__provision_backend_lambda_function("new_connection"))
         self.__add_websocket_route_method("join", self.__provision_backend_lambda_function("join_session"))
-        self.__add_websocket_route_method("start", self.__provision_backend_lambda_function("start_session"))
+        self.__add_websocket_route_method("start", self.__provision_backend_lambda_function("start_round"))
         self.__add_websocket_route_method("answer", self.__provision_backend_lambda_function("choose_answer"))
         self.__add_websocket_route_method("arbitrate", self.__provision_backend_lambda_function("arbitrate"))
 
