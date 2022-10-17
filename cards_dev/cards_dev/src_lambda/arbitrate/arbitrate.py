@@ -19,8 +19,9 @@ def lambda_handler(event: dict, context: dict) -> dict:
             ResponseDirective.ShowError, is_error=True)
     else:
         game_session.active_round.winning_answer_index = game_session.active_round.answer_cards_suggested.index(AnswerCard(arbitration))
-        game_session.phase = Phase.RoundFinished
         GameData.write_round(game_session.active_round)
+        game_session.phase = Phase.RoundFinished
+        GameData.write_session(game_session)
 
         response = {
             "session": game_session.to_response_object(),
