@@ -107,7 +107,6 @@ class GameRound(SessionDataClass):
     arbiter: Player
     question_card: QuestionCard
     answer_cards_suggested: List[AnswerCard]
-    winner: Union[Player,  None]
     winning_answer_index: Union[int, None]
 
     def to_dynamodb_object(self) -> dict:
@@ -117,9 +116,8 @@ class GameRound(SessionDataClass):
         return self.to_dict()  # TODO what should be stored in archive?
 
     def to_response_object(self) -> dict:
-        return super().to_response_object(["question_card", "winner", "arbiter", "answer_cards_suggested"], {
+        return super().to_response_object(["question_card", "arbiter", "answer_cards_suggested"], {
             "question_card": self.question_card.to_response_object(),
-            "winner": self.winner.to_response_object() if self.winner else None,
             "arbiter": self.arbiter.to_response_object(),
             "answer_cards_suggested": [card.to_response_object() for card in self.answer_cards_suggested]
             })
@@ -132,7 +130,6 @@ class GameRound(SessionDataClass):
             Player.from_dynamodb_object(dynamodb_obj.get("arbiter")),
             QuestionCard.from_dynamodb_object(dynamodb_obj.get("question_card")),
             [AnswerCard.from_dynamodb_object(card) for card in dynamodb_obj.get("answer_cards_suggested")],
-            Player.from_dynamodb_object(dynamodb_obj.get("winner")) if dynamodb_obj.get("winner") else None,
             dynamodb_obj.get("winning_answer_index"),
         )
 

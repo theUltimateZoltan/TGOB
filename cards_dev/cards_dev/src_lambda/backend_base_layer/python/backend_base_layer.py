@@ -73,14 +73,7 @@ class GameData:
             ConsistentRead=True
         )
         round_db_object: dict = query_result.get("Item", None)
-        return GameRound(
-            session_id=round_db_object.get("session_id"),
-            round=round_db_object.get("round"),
-            winner_id=round_db_object.get("winner_id"),
-            question_card=QuestionCard.from_dynamodb_object(round_db_object.get("question_card")),
-            answer_cards_suggested=round_db_object.get("answer_cards_suggested"),
-            winning_answer_index=round_db_object.get("winning_answer_index"),
-        ) if round_db_object else None
+        return GameRound.from_dynamodb_object(round_db_object) if round_db_object else None
 
     @staticmethod
     def get_session(session_id: str) -> Union[GameSession, None]:
@@ -145,7 +138,6 @@ class GameData:
             session_id=session.session_id,
             round=current_round.round + 1 if current_round else 1,
             arbiter=Random().choice(session.players),
-            winner= None,
             question_card=GameData.get_question_card(Distribution.Uniform),
             answer_cards_suggested=[],
             winning_answer_index=None
