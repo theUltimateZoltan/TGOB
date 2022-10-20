@@ -2,8 +2,10 @@ from aws_cdk import (
     Stack,
     RemovalPolicy,
     aws_dynamodb as dyndb,
-    aws_s3 as s3
+    aws_lambda as _lambda,
+    aws_s3 as s3,
 )
+from aws_cdk.aws_lambda_event_sources import DynamoEventSource
 from constructs import Construct
 from cards_dev.back_end import CardsBackend
 
@@ -28,6 +30,7 @@ class CardsGameData(Stack):
         for function in self.__backend.lambdas:
             self.__session_data.grant_read_write_data(function)
 
+        self.__backend.archival_function.add_event_source(DynamoEventSource(self.__session_data, starting_position=_lambda.StartingPosition.LATEST))
     
     def __create_cards_table(self) -> None:
         self.__cards_data = dyndb.Table(self, "dev_cards_data", 

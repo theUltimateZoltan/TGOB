@@ -47,6 +47,10 @@ class CardsBackend(Stack):
     def lambdas(self) -> List[lambda_.Function]:
         return self.__lambdas
 
+    @property
+    def archival_function(self) -> lambda_.Function:
+        return self.__archival_function
+
     def __create_backend_resources(self) -> None:
 
         self.__api_tls_certificate = acm.DnsValidatedCertificate(self, "api_tls_certificate",
@@ -142,6 +146,9 @@ class CardsBackend(Stack):
         self.__add_websocket_route_method("start", self.__provision_backend_lambda_function("start_round"))
         self.__add_websocket_route_method("answer", self.__provision_backend_lambda_function("choose_answer"))
         self.__add_websocket_route_method("arbitrate", self.__provision_backend_lambda_function("arbitrate"))
+        self.__add_websocket_route_method("archive_game_data", archival_function:=self.__provision_backend_lambda_function("archive_game_data"))
+
+        self.__archival_function = archival_function
 
     def __add_rest_resource_method(self, path: str, method: _HttpMethod, proxy_function: lambda_.Function) -> None:
         assert path in self.__rest_resources, "First create the resource, then add a method to it."
