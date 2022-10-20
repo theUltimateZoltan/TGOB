@@ -27,6 +27,7 @@ from cards_dev.user_data import CardsUserData
 class _HttpMethod(enum.Enum):
     POST="POST"
     GET="GET"
+    DELETE="DELETE"
 
 
 class CardsBackend(Stack):
@@ -141,14 +142,16 @@ class CardsBackend(Stack):
             self.__rest_api_gateway.root.add_resource(resource)
             
         self.__add_rest_resource_method("session", _HttpMethod.POST, self.__provision_backend_lambda_function("create_new_session"))
+        self.__add_rest_resource_method("session", _HttpMethod.DELETE ,archival_function:=self.__provision_backend_lambda_function("archive_game_data"))
+        self.__archival_function = archival_function
+
         self.__add_websocket_route_method("$connect", self.__provision_backend_lambda_function("new_connection"))
         self.__add_websocket_route_method("join", self.__provision_backend_lambda_function("join_session"))
         self.__add_websocket_route_method("start", self.__provision_backend_lambda_function("start_round"))
         self.__add_websocket_route_method("answer", self.__provision_backend_lambda_function("choose_answer"))
         self.__add_websocket_route_method("arbitrate", self.__provision_backend_lambda_function("arbitrate"))
-        self.__add_websocket_route_method("archive_game_data", archival_function:=self.__provision_backend_lambda_function("archive_game_data"))
 
-        self.__archival_function = archival_function
+        
 
     def __add_rest_resource_method(self, path: str, method: _HttpMethod, proxy_function: lambda_.Function) -> None:
         assert path in self.__rest_resources, "First create the resource, then add a method to it."
