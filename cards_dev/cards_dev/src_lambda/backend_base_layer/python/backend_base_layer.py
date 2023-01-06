@@ -89,6 +89,7 @@ class GameData:
             return GameSession(
                 session_id=metadata_object.get("session_id"),
                 phase=Phase(metadata_object.get("phase")),
+                ttl=int(metadata_object.get("ttl")),
                 coordinator_connection_id=metadata_object.get("coordinator_connection_id"),
                 players=[Player.from_dynamodb_object(p) for p in metadata_object.get("players")],
                 active_round=GameRound.from_dynamodb_object(retrieved_round_objects[-1]) if len(retrieved_round_objects) > 1 else None,

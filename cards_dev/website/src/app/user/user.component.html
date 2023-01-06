@@ -1,5 +1,5 @@
 <div *ngIf="!this.user_name">
-    <a [href]="get_login_url()">login</a>&nbsp;|&nbsp;<a [href]="get_signup_url()">sign up</a>
+    <a class="user-link" [href]="get_login_url()">login</a><a class="user-link" [href]="get_signup_url()">sign up</a>
 </div>
 <div *ngIf="this.user_name">
     <span>Hi, {{ this.user_name }} </span>(<a [href]="get_login_url()">switch user</a>)

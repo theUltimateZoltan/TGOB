@@ -26,12 +26,22 @@ class CardsGameData(Stack):
             removal_policy=self.__data_resource_removal_policy,
             partition_key= dyndb.Attribute(name="session_id", type=dyndb.AttributeType.STRING),
             sort_key=dyndb.Attribute(name="round", type=dyndb.AttributeType.NUMBER),
+            time_to_live_attribute="ttl",
             stream=dyndb.StreamViewType.NEW_IMAGE
         )
         for function in self.__backend.lambdas:
             self.__session_data.grant_read_write_data(function)
 
-        self.__backend.archival_function.add_event_source(DynamoEventSource(self.__session_data, starting_position=_lambda.StartingPosition.LATEST))
+        self.__backend.archival_function.add_event_source(DynamoEventSource(
+            self.__session_data, 
+            starting_position=_lambda.StartingPosition.LATEST, 
+            filters=[{ #  used for handling only Dynamo TTL events: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/time-to-live-ttl-streams.html
+                "Pattern": { 
+                    "userIdentity": { 
+                        "type": ["Service"], "principalId": ["dynamodb.amazonaws.com"] 
+                        } 
+                    }
+                }]))
     
     def __create_cards_table(self) -> None:
         self.__cards_data = dyndb.Table(self, "dev_cards_data", 

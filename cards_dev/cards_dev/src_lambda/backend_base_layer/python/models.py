@@ -1,6 +1,7 @@
 from __future__ import annotations
 from abc import abstractmethod
 from dataclasses import dataclass, asdict
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import List, Union
 
@@ -143,10 +144,11 @@ class GameSession(SessionDataClass):
     players: List[Player]
     active_round: Union[GameRound, None]
     recent_rounds: List[GameRound]
+    expiration_time: int = int(datetime.timestamp(datetime.now() + timedelta(days=1)))
 
     def to_dynamodb_object(self) -> dict:
          return super().to_dynamodb_object(["active_round", "recent_rounds", "phase"], 
-         {"round": 0, "phase": self.phase.value})
+         {"round": 0, "phase": self.phase.value, "ttl": self.expiration_time})
 
     def to_response_object(self) -> dict:
         return super().to_response_object(["active_round", "recent_rounds", "phase", "players"], 

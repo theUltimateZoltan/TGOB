@@ -1,1 +1,9 @@
-/* You can add global styles to this file, and also import other style files */
+
+/* follow the color pallete in https://colorhunt.co/palette/00005c3b185fc060a1f0caa3 */
+body {
+  background-color: #00005C !important;
+  color: #F0CAA3 !important;
+}
+a {
+  color: #C060A1 !important;
+}
